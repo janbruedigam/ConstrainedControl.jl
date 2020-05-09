@@ -7,18 +7,20 @@ mutable struct PID{T} <: Controller
     goal::T
     integratedError::T
 
+    control!::Function
+
     function PID(eqcid::Int64, goal::T; P::T = zero(T), I::T = zero(T), D::T = zero(T)) where T
         @assert !(P == 0 && I == 0 && D == 0)
 
-        new{T}(P, I, D, eqcid, goal, 0)
+        new{T}(P, I, D, eqcid, goal, 0, control_pid!)
     end
 end
 
-@inline stateError(mechanism, eqc, goal, N) = goal - minimalCoordinates(eqc, mechanism, K = N)[1]
+@inline stateError_pid(mechanism, eqc, goal, N) = goal - minimalCoordinates(mechanism, eqc, K = N)[1]
 
-function control!(mechanism, pid::PID)
-    e0 = stateError(mechanism, geteqconstraint(mechanism, pid.eqcid), pid.goal, 1)
-    e1 = stateError(mechanism, geteqconstraint(mechanism, pid.eqcid), pid.goal, 2)
+function control_pid!(mechanism, pid::PID)
+    e0 = stateError_pid(mechanism, geteqconstraint(mechanism, pid.eqcid), pid.goal, 1)
+    e1 = stateError_pid(mechanism, geteqconstraint(mechanism, pid.eqcid), pid.goal, 2)
 
     pid.integratedError += e1 * mechanism.Δt
     differentialError = (e1 - e0) / mechanism.Δt
