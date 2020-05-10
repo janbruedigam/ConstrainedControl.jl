@@ -4,8 +4,12 @@ using ConstrainedDynamics
 using ConstrainedDynamics: minimalCoordinates, geteqconstraint
 using StaticArrays
 
-export PID
+import ControlSystems: dlqr
+
+export PID,
+    LQR
 
 include("pid.jl")
+include("lqr.jl")
 
 end
