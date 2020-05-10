@@ -17,19 +17,22 @@ q1 = Quaternion(RotX(ϕ1))
 # Links
 origin = Origin{Float64}()
 link1 = Body(box)
+link2 = Body(box)
 
 # Constraints
-joint_between_origin_and_link1 = EqualityConstraint(Revolute(origin, link1, zeros(3), p2, joint_axis))
+joint1 = EqualityConstraint(Revolute(origin, link1, zeros(3), p2, joint_axis))
+joint2 = EqualityConstraint(Revolute(link1, link2, -p2, p2, joint_axis))
 
-links = [link1]
-constraints = [joint_between_origin_and_link1]
+links = [link1;link2]
+constraints = [joint1;joint2]
 shapes = [box]
 
 
 mech = Mechanism(origin, links, constraints, shapes = shapes, tend = 10.)
 setPosition!(mech,origin,link1,p2 = p2,Δq = q1)
+setPosition!(mech,origin,link2,p1=-p2,p2 = p2,Δq = q1)
 
-pid = PID(mech, joint_between_origin_and_link1.id, pi / 2, P = 10., I = 10., D = 5.)
+pid = PID(mech, getfield.(constraints,:id), [pi/2;-pi/4], P = [10.;0.], I = [10.;0], D = [5.;0.])
 
 
 simulate!(mech,pid,save = true)
