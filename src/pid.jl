@@ -41,7 +41,7 @@ function control_pid!(mechanism, pid::PID{T,N}) where {T,N}
     u = pid.P .* perror + pid.I .* pid.integratedError + pid.D .* differentialError
 
     for i=1:N
-        setForce!(mechanism, geteqconstraint(mechanism, pid.eqcid[i]), [nothing;u[i]])
+        setForce!(mechanism, geteqconstraint(mechanism, pid.eqcid[i]), SVector{1,T}(u[i]))
     end
     # τ = SVector{3,Float64}(1, 0, 0) * (pid.P * perror + pid.I * pid.integratedError + pid.D * differentialError)
     # setForce!(mechanism, mechanism.bodies[1], τ = τ)
