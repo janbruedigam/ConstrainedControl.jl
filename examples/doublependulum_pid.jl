@@ -32,7 +32,7 @@ mech = Mechanism(origin, links, constraints, shapes = shapes, tend = 10.)
 setPosition!(mech,origin,link1,p2 = p2,Δq = q1)
 setPosition!(mech,origin,link2,p1=-p2,p2 = p2,Δq = q1)
 
-pid = PID(mech, getfield.(constraints,:id), [pi/2;-pi/4], P = [10.;0.], I = [10.;0], D = [5.;0.])
+pid = PID(mech, getfield.(constraints,:id), [pi/2;-3pi/4], P = [10.;10.], I = [10.;10], D = [5.;5.])
 
 
 simulate!(mech,pid,save = true)
