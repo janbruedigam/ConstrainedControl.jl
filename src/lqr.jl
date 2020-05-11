@@ -9,16 +9,14 @@ mutable struct LQR{T} <: Controller
 
     control!::Function
 
-    function LQR(mechanism, bodyid::Int64, Q::AbstractMatrix{T}, R::AbstractMatrix{T}; xd::AbstractVector{T}=zeros(T,3), vd::AbstractVector{T}=zeros(T,3), ud::AbstractVector{T}=zeros(T,3)) where T
+    function LQR(mechanism, bodyid::Int64, Q::AbstractMatrix{T}, R::AbstractMatrix{T}; xd::AbstractVector{T}=zeros(T,3), vd::AbstractVector{T}=zeros(T,3), Fd::AbstractVector{T}=zeros(T,3)) where T
         Δt = mechanism.Δt
         body = getbody(mechanism, bodyid)
-        # linearize:
-        E = SMatrix{3,3,T,9}(1,0,0,0,1,0,0,0,1)
-        Z = @SMatrix zeros(T,3,3)
-        M = ConstrainedDynamics.getM(body)[1:3,1:3]
-        A = [[E E*Δt];[Z E]]
-        B = [inv(M)*Δt^2;inv(M)*Δt]
-        
+        # linearize        
+        Afull, Bfull = ConstrainedDynamics.∂zp1∂z(mechanism, body, xd, vd, Fd, Quaternion{T}(), zeros(T,3), zeros(T,3), Δt)
+        A = Afull[1:6,1:6]
+        B = Bfull[1:6,1:3]
+
         # calculate K
         K = dlqr(A,B,Q,R)        
         
