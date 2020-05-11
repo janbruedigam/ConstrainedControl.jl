@@ -1,6 +1,7 @@
 using ConstrainedDynamics
 using ConstrainedControl
 using LinearAlgebra
+using Rotations
 
 length1 = 1.0
 width, depth = 1.0, 1.0
@@ -19,15 +20,17 @@ shapes = [box]
 
 
 mech = Mechanism(origin, links, constraints, shapes = shapes, tend = 20.)
-setPosition!(mech,origin,link1,Δx = [1.;2;-3])
+setPosition!(mech,origin,link1,Δx = [.5;1.;-1.5], Δq = Quaternion(RotY(-1.))*Quaternion(RotX(-1.)))
 
-Q = diagm(ones(6))
+Q = diagm(ones(12))
 Q[2,2] = 2
 Q[3,3] = 0.1
-R = diagm(ones(3))
+Q[7,7] = 2
+R = diagm(ones(6))
 R[1] = 100
 
-lqr = LQR(mech, link1.id, Q, R, xd=[0.;0;0], vd=[0.;0;0.], ud=[0.;0;9.81*box.m])
+
+lqr,A,B = LQR(mech, link1.id, Q, R, Fd=[0.;0;9.81*box.m])
 
 
 simulate!(mech,lqr,save = true)

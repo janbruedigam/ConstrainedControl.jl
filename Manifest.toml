@@ -106,8 +106,8 @@ version = "0.1.2"
 
 [[ConstrainedDynamics]]
 deps = ["Blink", "Colors", "CoordinateTransformations", "FileIO", "GeometryTypes", "LightXML", "LinearAlgebra", "MeshCat", "MeshIO", "Plots", "Rotations", "StaticArrays"]
-git-tree-sha1 = "d1d33bcc03ecf6176e50d3a56ee991f88674be95"
-repo-rev = "master"
+git-tree-sha1 = "8f7779d755ea16fba904aea8df3050b55a4ba507"
+repo-rev = "linearizations"
 repo-url = "https://github.com/janbruedigam/ConstrainedDynamics.jl"
 uuid = "65b0d8a9-e9fd-4f02-8653-a7163c490b26"
 version = "0.1.0"
@@ -162,9 +162,9 @@ uuid = "8bb1440f-4735-579b-a4ab-409b98df4dab"
 
 [[DiffEqBase]]
 deps = ["ArrayInterface", "ChainRulesCore", "ConsoleProgressMonitor", "DataStructures", "Distributed", "DocStringExtensions", "FunctionWrappers", "IterativeSolvers", "IteratorInterfaceExtensions", "LabelledArrays", "LinearAlgebra", "Logging", "LoggingExtras", "MuladdMacro", "Parameters", "Printf", "ProgressLogging", "RecipesBase", "RecursiveArrayTools", "RecursiveFactorization", "Requires", "Roots", "SparseArrays", "StaticArrays", "Statistics", "SuiteSparse", "TableTraits", "TerminalLoggers", "TreeViews", "ZygoteRules"]
-git-tree-sha1 = "cde3b2cae8af04105e4920392dfb096794e9e71d"
+git-tree-sha1 = "d0b3a977532c1afe68c67a00abfc5720317eedc6"
 uuid = "2b5f629d-d688-5b77-993f-72d75c75574e"
-version = "6.32.1"
+version = "6.32.2"
 
 [[DiffResults]]
 deps = ["StaticArrays"]
@@ -783,10 +783,10 @@ uuid = "19fa3120-7c27-5ec5-8db8-b0b0aa330d6f"
 version = "0.1.2"
 
 [[WebIO]]
-deps = ["AssetRegistry", "Base64", "Compat", "Distributed", "FunctionalCollections", "JSON", "Logging", "Observables", "Pkg", "Random", "Requires", "Sockets", "UUIDs", "WebSockets", "Widgets"]
-git-tree-sha1 = "ba53f245d0c4ef3ccf0f2c89546ecfcd1957797f"
+deps = ["AssetRegistry", "Base64", "Distributed", "FunctionalCollections", "JSON", "Logging", "Observables", "Pkg", "Random", "Requires", "Sockets", "UUIDs", "WebSockets", "Widgets"]
+git-tree-sha1 = "add6b526464ab77e9decef9d2dafa46c54af6617"
 uuid = "0f1e0344-ec1d-5b48-a673-e5cf874b6c29"
-version = "0.8.11"
+version = "0.8.14"
 
 [[WebSockets]]
 deps = ["Base64", "Dates", "Distributed", "HTTP", "Logging", "Random", "Sockets", "Test"]
