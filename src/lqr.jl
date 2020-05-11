@@ -1,12 +1,15 @@
-# Only for revolute joints
+# Only for constant reference trajectories
 mutable struct LQR{T} <: Controller
     K::SMatrix{3,6,T,18}
+    xd::SVector{3,Float64}
+    vd::SVector{3,Float64}
+    ud::SVector{3,Float64}
 
     bodyid::Int64
 
     control!::Function
 
-    function LQR(mechanism, bodyid::Int64, xd::AbstractVector{T}, vd::AbstractVector{T}, ud::AbstractVector{T}, Q::AbstractMatrix{T}, R::AbstractMatrix{T};) where T
+    function LQR(mechanism, bodyid::Int64, Q::AbstractMatrix{T}, R::AbstractMatrix{T}; xd::AbstractVector{T}=zeros(T,3), vd::AbstractVector{T}=zeros(T,3), ud::AbstractVector{T}=zeros(T,3)) where T
         Δt = mechanism.Δt
         body = getbody(mechanism, bodyid)
         # linearize:
@@ -19,7 +22,7 @@ mutable struct LQR{T} <: Controller
         # calculate K
         K = dlqr(A,B,Q,R)        
         
-        new{T}(K, bodyid, control_lqr!)
+        new{T}(K, xd, vd, ud, bodyid, control_lqr!)
     end
 end
 
@@ -27,7 +30,7 @@ function control_lqr!(mechanism, lqr::LQR{T}) where {T}
     Δt = mechanism.Δt
     body = getbody(mechanism, lqr.bodyid)
     zp = [ConstrainedDynamics.getx3(body,Δt);ConstrainedDynamics.getvnew(body)]
-    F = -lqr.K * zp
+    F = -lqr.K * (zp - [lqr.xd;lqr.vd])
 
-    setForce!(mechanism, body, F=F)
+    setForce!(mechanism, body, F=F+lqr.ud)
 end
