@@ -30,11 +30,11 @@ mutable struct LQR{T} <: Controller
         KT = K[1:3,:]    
         KR = K[4:6,:]
         
-        new{T}(KT, KR, xd, vd, Fd, qd, ωd, τd, bodyid, control_lqr!), Afull, Bfull
+        new{T}(KT, KR, xd, vd, Fd, qd, ωd, τd, bodyid, control_lqr!)
     end
 end
 
-function control_lqr!(mechanism, lqr::LQR{T}) where {T}
+function control_lqr!(mechanism, lqr::LQR{T}, k) where {T}
     Δt = mechanism.Δt
     body = getbody(mechanism, lqr.bodyid)
 

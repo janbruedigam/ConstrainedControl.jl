@@ -28,12 +28,12 @@ constraints = [joint1;joint2]
 shapes = [box]
 
 
-mech = Mechanism(origin, links, constraints, shapes = shapes, tend = 10.)
+mech = Mechanism(origin, links, constraints, shapes = shapes)
 setPosition!(mech,origin,link1,p2 = p2,Δq = q1)
 setPosition!(mech,origin,link2,p1=-p2,p2 = p2,Δq = q1)
 
 pid = PID(mech, getfield.(constraints,:id), [pi/2;-3pi/4], P = [10.;10.], I = [10.;10], D = [5.;5.])
 
 
-simulate!(mech,pid,save = true)
-visualize!(mech)
+storage = simulate!(mech,10.,pid,record = true)
+visualize!(mech,storage,shapes)

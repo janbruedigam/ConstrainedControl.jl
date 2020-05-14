@@ -27,7 +27,7 @@ end
 
 @inline stateError_pid(mechanism, eqc, goal, N) = goal - minimalCoordinates(mechanism, eqc, K = N)[1]
 
-function control_pid!(mechanism, pid::PID{T,N}) where {T,N}
+function control_pid!(mechanism, pid::PID{T,N}, k) where {T,N}
     e0 = zeros(T,N)
     e1 = zeros(T,N)
     for i=1:N
