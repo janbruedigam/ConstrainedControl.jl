@@ -106,8 +106,8 @@ version = "0.1.2"
 
 [[ConstrainedDynamics]]
 deps = ["Blink", "Colors", "CoordinateTransformations", "FileIO", "GeometryTypes", "LightXML", "LinearAlgebra", "MeshCat", "MeshIO", "Plots", "Rotations", "StaticArrays"]
-git-tree-sha1 = "0423cbbdb92aa74bb8b0645f866b455decdef498"
-repo-rev = "verlet"
+git-tree-sha1 = "2e5104aa104e96a60422fce8e3e89bdae3ce7548"
+repo-rev = "master"
 repo-url = "https://github.com/janbruedigam/ConstrainedDynamics.jl"
 uuid = "65b0d8a9-e9fd-4f02-8653-a7163c490b26"
 version = "0.1.0"
