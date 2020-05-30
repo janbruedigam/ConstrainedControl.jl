@@ -37,17 +37,18 @@ end
 function control_lqr!(mechanism, lqr::LQR{T}, k) where {T}
     Δt = mechanism.Δt
     body = getbody(mechanism, lqr.bodyid)
+    state = body.state
 
-    x3 = ConstrainedDynamics.getx3(body,Δt)
-    v2 = ConstrainedDynamics.getvnew(body)
-    q3 = ConstrainedDynamics.getq3(body,Δt)
-    ω2 = ConstrainedDynamics.getωnew(body)
+    x2 = state.xsol[2]
+    v2 = state.vsol[2]
+    q2 = state.qsol[2]
+    ω2 = state.ωsol[2]
 
-    ΔzpT = [x3-lqr.xd;v2-lqr.vd]
-    ΔzpR = [ConstrainedDynamics.VLᵀmat(lqr.qd)*q3;ω2-lqr.ωd]
+    ΔzpT = [x2-lqr.xd;v2-lqr.vd]
+    ΔzpR = [ConstrainedDynamics.VLᵀmat(lqr.qd)*q2;ω2-lqr.ωd]
     Δzp = [ΔzpT;ΔzpR]
     F = -lqr.KT * Δzp
     τ = -lqr.KR * Δzp
 
-    setForce!(mechanism, body, F=F+lqr.Fd, τ=τ+lqr.τd)
+    setForce!(body, F=F+lqr.Fd, τ=τ+lqr.τd)
 end

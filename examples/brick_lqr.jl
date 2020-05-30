@@ -20,7 +20,7 @@ shapes = [box]
 
 
 mech = Mechanism(origin, links, constraints, shapes = shapes)
-setPosition!(mech,origin,link1,Δx = [.5;1.;-1.5], Δq = Quaternion(RotY(-1.))*Quaternion(RotX(-1.)))
+setPosition!(origin,link1,Δx = [.5;1.;-1.5], Δq = Quaternion(RotY(pi/2)))
 
 Q = diagm(ones(12))
 Q[2,2] = 2
@@ -34,4 +34,4 @@ lqr = LQR(mech, link1.id, Q, R, Fd=[0.;0;9.81*box.m])
 
 
 storage = simulate!(mech,20.,lqr,record = true)
-visualize!(mech,storage,shapes)
+visualize(mech,storage,shapes)
