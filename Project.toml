@@ -5,12 +5,11 @@ version = "0.1.0"
 
 [deps]
 ConstrainedDynamics = "65b0d8a9-e9fd-4f02-8653-a7163c490b26"
-ControlSystems = "a6e380b2-a6ca-5380-bf3e-84a91bcd477e"
+LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
 
 [compat]
 ConstrainedDynamics = "0.1.0"
-ControlSystems = "0.6.0"
 StaticArrays = "0.12.1"
 julia = "1.4"
 

@@ -2,17 +2,18 @@ module ConstrainedControl
 
 using ConstrainedDynamics
 using ConstrainedDynamics: minimalCoordinates, geteqconstraint, Vmat
+using LinearAlgebra
 using StaticArrays
-
-import ControlSystems: dlqr
 
 export PID,
     LQR,
 
     ilqr
 
-include("pid.jl")
-include("lqr.jl")
-include("ilqr.jl")
+
+include(joinpath("util","util.jl"))
+include(joinpath("control","pid.jl"))
+include(joinpath("control","lqr.jl"))
+include(joinpath("control","ilqr.jl"))
 
 end

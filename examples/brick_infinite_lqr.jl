@@ -30,8 +30,8 @@ R = diagm(ones(6))
 R[1] = 100
 
 
-lqr = LQR(mech, link1.id, Q, R, Fd=[0.;0;9.81*box.m])
+lqr = LQR(mech, link1.id, Q, R, Inf; Fd=[0.;0;9.81*box.m])
 
 
-storage = simulate!(mech,20.,lqr,record = true)
+storage = simulate!(mech,30.,lqr,record = true)
 visualize(mech,storage,shapes)
