@@ -24,10 +24,10 @@ mutable struct LQR{T,N} <: Controller
 
         body = getbody(mechanism, bodyid)
         # linearize        
-        Afull, Bfull = ConstrainedDynamics.∂zp1∂z(mechanism, body, xd, vd, Fd, qd, ωd, τd, Δt)
+        A, B = ConstrainedDynamics.linearizeSystem(mechanism, xd, vd, Fd, qd, ωd, τd)
 
         # calculate K
-        KT, KR = dlqr(Afull,Bfull,Q,R,N)   
+        KT, KR = dlqr(A,B,Q,R,N)   
 
         if N<Inf
             N=Integer(ceil(horizon/Δt))

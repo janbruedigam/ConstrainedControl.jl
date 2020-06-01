@@ -1,7 +1,7 @@
 module ConstrainedControl
 
 using ConstrainedDynamics
-using ConstrainedDynamics: minimalCoordinates, geteqconstraint, Vmat
+using ConstrainedDynamics: minimalCoordinates, geteqconstraint
 using LinearAlgebra
 using StaticArrays
 
