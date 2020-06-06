@@ -24,10 +24,14 @@ mutable struct LQR{T,N} <: Controller
 
         body = getbody(mechanism, bodyid)
         # linearize        
-        A, B = ConstrainedDynamics.linearizeSystem(mechanism, xd, vd, Fd, qd, ωd, τd)
+        A, B, G = linearizeMechanism(mechanism, xd, vd, Fd, qd, ωd, τd)
 
         # calculate K
-        KT, KR = dlqr(A,B,Q,R,N)   
+        if size(G)[1] == 0
+            KT, KR = dlqr(A,B,Q,R,N)
+        else
+            KT, KR = dlqr(A,B,G,Q,R,N)
+        end
 
         if N<Inf
             N=Integer(ceil(horizon/Δt))
@@ -91,10 +95,52 @@ function dlqr(A,B,Q,R,N)
         KR = [zeros(3,12) for i=1:N-1]
         Pk = Q
         for k=N-1:-1:1
-            Pk = A'*Pk*A - A'*Pk*B/(R+B'*Pk*B)*B'*Pk*A + Q
             Kk = (R+B'*Pk*B)\B'*Pk*A
             KT[k] = Kk[1:3,:]
             KR[k] = Kk[4:6,:]
+
+            Pk = A'*Pk*A - A'*Pk*B*Kk + Q
+        end
+        return KT, KR
+    end
+end
+
+function dlqr(A,B,G,Q,R,N)
+    if N==Inf
+        @error "not supported"
+    else
+        N = Integer(ceil(N))
+        n = size(G)[1]
+        m = size(B)[2]
+        r = minimum([n;m])
+
+        ZGU = zeros(n, m)
+        KT = [zeros(3,12) for i=1:N-1]
+        KR = [zeros(3,12) for i=1:N-1]
+
+        Pk = Q
+        Hk = G
+
+        for k=N-1:-1:1
+            Mxxk = Q + A'*Pk*A
+            Muuk = R + B'*Pk*B
+            Muxk = B'*Pk*A
+
+            Cxk = [G;Hk*A]
+            Cuk = [ZGU;Hk*B]
+
+            VSVDk = svd(Cuk, full=true)
+            Vck = VSVDk.V[:,1:r]
+            Vuck = VSVDk.V[:,r+1:m]
+            
+
+            Kk = Vck*pinv(Cuk*Vck)*Cxk + Vuck/(Vuck'*Muuk*Vuck)*Vuck'*Muxk
+            KT[k] = Kk[1:3,:]
+            KR[k] = Kk[4:6,:]
+
+
+            Pk = Mxxk - 2*Muxk'*Kk + Kk'*Muuk*Kk
+            Hk = (I - Cuk*Vck*pinv(Cuk*Vck))*Cxk
         end
         return KT, KR
     end
