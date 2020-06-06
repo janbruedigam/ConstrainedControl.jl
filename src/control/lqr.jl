@@ -99,7 +99,7 @@ function dlqr(A,B,Q,R,N)
             KT[k] = Kk[1:3,:]
             KR[k] = Kk[4:6,:]
 
-            Pk = A'*Pk*A - A'*Pk*B/Kk + Q
+            Pk = A'*Pk*A - A'*Pk*B*Kk + Q
         end
         return KT, KR
     end
