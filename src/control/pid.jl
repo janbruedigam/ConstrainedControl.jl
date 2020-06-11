@@ -1,51 +1,67 @@
-# Only for revolute joints
+# Only for 1dof joints
 mutable struct PID{T,N} <: Controller
     P::SVector{N,T}
     I::SVector{N,T}
     D::SVector{N,T}
 
-    eqcid::SVector{N,Int64}
-    goal::SVector{N,T}
-    integratedError::SVector{N,T}
-    lastError::SVector{N,T}
+    eqcids::SVector{N,Int64}
+    goals::SVector{N,T}
+    integratederrors::SVector{N,T}
+    lasterrors::SVector{N,T}
 
     control!::Function
 
+
     function PID(mechanism, eqcid::Int64, goal::T; P::T = zero(T), I::T = zero(T), D::T = zero(T)) where T
-        @assert typeof(geteqconstraint(mechanism, eqcid)) <: EqualityConstraint{T,5,2,Tuple{ConstrainedDynamics.Translational3{T},ConstrainedDynamics.Rotational2{T}}} "Only revolute joint supported"
+        eqc = geteqconstraint(mechanism, eqcid)
+        Nb = 6 * length(unique(eqc.childids))
+        Nc = ConstrainedDynamics.length(eqc)
+        @assert Nb-Nc == 1 "Only 1 DOF joints are supported"
+        
         new{T,1}([P], [I], [D], [eqcid], [goal], [0], [0], control_pid!)
     end
-    function PID(mechanism, eqcid::AbstractVector{Int64}, goal::AbstractVector{T}; 
-        P::AbstractVector{T} = zeros(T,length(eqcid)), I::AbstractVector{T} = zeros(T,length(eqcid)), D::AbstractVector{T} = zeros(T,length(eqcid))) where T
 
-        N = length(eqcid)
-        for i=1:N
-            @assert typeof(geteqconstraint(mechanism, eqcid[i])) <: EqualityConstraint{T,5,2,Tuple{ConstrainedDynamics.Translational3{T},ConstrainedDynamics.Rotational2{T}}} "Only revolute joint supported"
+    function PID(mechanism, eqcids::AbstractVector{Int64}, goals::AbstractVector{T}; 
+        P::AbstractVector{T} = zeros(T,length(eqcids)), I::AbstractVector{T} = zeros(T,length(eqcids)), D::AbstractVector{T} = zeros(T,length(eqcids))) where T
+
+
+        for eqcid in eqcids
+            eqc = geteqconstraint(mechanism, eqcid)
+            Nb = 6 * length(unique(eqc.childids))
+            Nc = 0
+            Nc = ConstrainedDynamics.length(eqc)
+            @assert Nb-Nc == 1 "Only 1 DOF joints are supported"
         end
-        new{T,N}(P, I, D, eqcid, goal, zeros(T,N), zeros(T,N), control_pid!)
+        new{T,N}(P, I, D, eqcids, goals, zeros(T,N), zeros(T,N), control_pid!)
     end
 end
 
-@inline stateError_pid(mechanism, eqc, goal) = goal - minimalCoordinates(mechanism, eqc)[1]
+function stateError_pid(mechanism, eqc, goal)
+    goal - minimalCoordinates(mechanism, eqc)[1]
+end
+
+@generated function error_pid(mechanism, eqcids::SVector{N,Int64}, goals) where {N}
+    vec = [:(goals[$i] - minimalCoordinates(mechanism, geteqconstraint(mechanism, eqcids[$i]))[1]) for i = 1:N]
+    return :(svcat($(vec...)))
+end
 
 function control_pid!(mechanism, pid::PID{T,N}, k) where {T,N}
-    e1 = zeros(T,N)
-    for i=1:N
-        e1[i] = stateError_pid(mechanism, geteqconstraint(mechanism, pid.eqcid[i]), pid.goal[i])
-    end
-    if k==1
-        pid.lastError = e1
-    end
+    Δt = mechanism.Δt
 
-    pid.integratedError += e1 * mechanism.Δt
-    differentialError = (e1 - pid.lastError) / mechanism.Δt
-    perror = e1
+    currenterrors = error_pid(mechanism, pid.eqcids, pid.goals)
+    k==1 && (pid.lasterrors = currenterrors)
+
+    perrors = currenterrors
+    pid.integratederrors += currenterrors * Δt
+    differentialerrors = (currenterrors - pid.lasterrors) / Δt
     
-    u = pid.P .* perror + pid.I .* pid.integratedError + pid.D .* differentialError
+    u = pid.P .* perrors + pid.I .* pid.integratederrors + pid.D .* differentialerrors
 
-    pid.lastError = e1
+    pid.lasterrors = currenterrors
 
     for i=1:N
-        setForce!(mechanism, geteqconstraint(mechanism, pid.eqcid[i]), SVector{1,T}(u[i]))
+        setForce!(mechanism, geteqconstraint(mechanism, pid.eqcids[i]), SVector(u[i]))
     end
+
+    return
 end
