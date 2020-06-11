@@ -21,10 +21,11 @@ mutable struct PID{T,N} <: Controller
         new{T,1}([P], [I], [D], [eqcid], [goal], [0], [0], control_pid!)
     end
 
-    function PID(mechanism, eqcids::AbstractVector{Int64}, goals::AbstractVector{T}; 
-        P::AbstractVector{T} = zeros(T,length(eqcids)), I::AbstractVector{T} = zeros(T,length(eqcids)), D::AbstractVector{T} = zeros(T,length(eqcids))) where T
+    function PID(mechanism, eqcids::AbstractVector{Int64}, goals::AVec; 
+            P::AVec = zeros(T,length(eqcids)), I::AVec = zeros(T,length(eqcids)), D::AVec = zeros(T,length(eqcids))
+        ) where {T, AVec<:AbstractVector{T}}
 
-
+        N = length(eqcids)
         for eqcid in eqcids
             eqc = geteqconstraint(mechanism, eqcid)
             Nb = 6 * length(unique(eqc.childids))

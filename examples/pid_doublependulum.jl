@@ -1,4 +1,5 @@
 using ConstrainedDynamics
+using ConstrainedDynamicsVis
 using ConstrainedControl
 
 # Parameters
@@ -12,9 +13,9 @@ p2 = [0.0;0.0;length1 / 2] # joint connection point
 
 # Initial orientation
 ϕ1 = 0
-q1 = Quaternion(RotX(ϕ1))
+q1 = UnitQuaternion(RotX(ϕ1))
 ϕ2 = 0
-q2 = Quaternion(RotX(ϕ2))
+q2 = UnitQuaternion(RotX(ϕ2))
 
 # Links
 origin = Origin{Float64}()
