@@ -1,3 +1,6 @@
 .DS_Store
 /Manifest.toml
 /dev/
+/.benchmarkci
+/benchmark/*.json
+/notes

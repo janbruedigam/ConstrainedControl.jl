@@ -12,7 +12,7 @@ box = Box(width, depth, length1, length1, color = RGBA(1., 1., 0.))
 p2 = [0.0;0.0;length1 / 2] # joint connection point
 
 # Initial orientation
-ϕ1 = pi-0.5
+ϕ1 = pi-1.
 q1 = Quaternion(RotX(ϕ1))
 
 # Links
@@ -33,7 +33,7 @@ setPosition!(origin,link1,p2 = p2,Δq = q1)
 Q = diagm(ones(12))
 R = diagm(ones(6))
 
-lqr = LQR(mech, link1.id, Q, R, 5., xd = [0;0;length1/2], qd = Quaternion(RotX(pi)))
+lqr = LQR(mech, link1.id, Q, R, 5., xd = [0;0;length1/2], qd = Quaternion(RotX(pi)), Fd=[0;0;9.81])
 
 
 storage = simulate!(mech,10.,lqr,record = true)

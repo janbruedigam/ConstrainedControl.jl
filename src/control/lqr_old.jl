@@ -73,15 +73,13 @@ function control_lqr!(mechanism, lqr::LQR{T,N}, k) where {T,N}
     ΔzpT = [x2-lqr.xd;v2-lqr.vd]
     ΔzpR = [ConstrainedDynamics.VLᵀmat(lqr.qd)*q2;ω2-lqr.ωd]
     Δzp = [ΔzpT;ΔzpR]
-    # if k<N
-    #     F = -lqr.KT[k] * Δzp
-    #     τ = -lqr.KR[k] * Δzp
-    # else
-    #     F = @SVector zeros(T,3)
-    #     τ = @SVector zeros(T,3)
-    # end
-    F = -lqr.KT[1] * Δzp
-    τ = -lqr.KR[1] * Δzp
+    if k<N
+        F = -lqr.KT[k] * Δzp
+        τ = -lqr.KR[k] * Δzp
+    else
+        F = @SVector zeros(T,3)
+        τ = @SVector zeros(T,3)
+    end
 
     setForce!(body, F=F+lqr.Fd, τ=τ+lqr.τd)
 end
