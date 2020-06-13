@@ -17,7 +17,9 @@ version = "0.12.2"
 
 [[ConstrainedDynamics]]
 deps = ["Colors", "LightXML", "LinearAlgebra", "Rotations", "StaticArrays"]
-git-tree-sha1 = "23ce20c34934447214893bae300066005d2c783a"
+git-tree-sha1 = "1ade1853c7ac184cab047b1f9ffef724e7937637"
+repo-rev = "update_linearization"
+repo-url = "https://github.com/janbruedigam/ConstrainedDynamics.jl.git"
 uuid = "65b0d8a9-e9fd-4f02-8653-a7163c490b26"
 version = "0.3.0"
 

@@ -13,7 +13,7 @@ export PID,
 
 include(joinpath("util","util.jl"))
 include(joinpath("control","pid.jl"))
-# include(joinpath("control","lqr.jl"))
+include(joinpath("control","lqr.jl"))
 # include(joinpath("control","ilqr.jl"))
 
 end
