@@ -43,7 +43,11 @@ mutable struct LQR{T,N,Nb12} <: Controller
         A, B, G = linearsystem(mechanism, xd, vd, qd, ωd, Fτd, bodyids, eqcids)
 
         # calculate K
-        K = dlqr(A, B, G, Q, R, N)
+        if norm(G*B)<1e-10
+            K = dlqr(A, B, Q, R, N)
+        else
+            K = dlqr(A, B, G, Q, R, N)
+        end
         
         new{T, N, Nb*12}(K, xd, vd, qd, ωd, eqcids, Fτd, control_lqr!)
     end
@@ -74,39 +78,43 @@ function control_lqr!(mechanism, lqr::LQR{T,N,Nb6}, k) where {T,N,Nb6}
     return
 end
 
-function dlqr(A,B,G,Q,R,N)
-    n = size(G)[1]
+function dlqr(A,B,Q,R,N)
     m = size(B)[2]
-    r = minimum([n;m])
-
-    ZGU = zeros(n, m)
     K = [[zeros(1,size(Q)[1]) for j=1:m] for i=1:N-1]
-
     Pk = Q
-    Hk = G
 
     for k=N-1:-1:1
-        Mxxk = Q + A'*Pk*A
-        Muuk = R + B'*Pk*B
-        Muxk = B'*Pk*A
-
-        Cxk = [G;Hk*A]
-        Cuk = [ZGU;Hk*B]
-
-        VSVDk = svd(Cuk, full=true).V
-        Vck = VSVDk[:,1:r]
-        Vuck = VSVDk[:,r+1:m]
+        C = R + B'*Pk*B
+        invC = inv(C)
         
-
-        Kk = Vck*pinv(Cuk*Vck)*Cxk + Vuck/(Vuck'*Muuk*Vuck)*Vuck'*Muxk
+        Kk = invC*B'*Pk*A
         for i=1:m
             K[k][i] = Kk[i:i,:]
         end
 
-        Pk = Mxxk - 2*Muxk'*Kk + Kk'*Muuk*Kk
-        Hk = (I - Cuk*Vck*pinv(Cuk*Vck))*Cxk
+        Pk = A'*Pk*A - A'*Pk*B*Kk + Q
     end
+    return K
+end
 
+function dlqr(A,B,G,Q,R,N)
+    m = size(B)[2]
+    K = [[zeros(1,size(Q)[1]) for j=1:m] for i=1:N-1]
+    Pk = Q
+    GB = G*B
+    BtGt = GB'
+
+    for k=N-1:-1:1
+        C = R + B'*Pk*B
+        invC = inv(C)
+        
+        Kk = invC*(I - BtGt*inv(GB*invC*BtGt)*GB*invC)*B'*Pk*A
+        for i=1:m
+            K[k][i] = Kk[i:i,:]
+        end
+
+        Pk = A'*Pk*A - A'*Pk*B*Kk + Q
+    end
     return K
 end
 
