@@ -4,6 +4,7 @@ using ConstrainedDynamics
 using ConstrainedDynamics: svcat
 using LinearAlgebra
 using StaticArrays
+using Rotations
 
 export PID,
     LQR,
