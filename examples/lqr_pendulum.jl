@@ -29,7 +29,7 @@ shapes = [box]
 
 
 mech = Mechanism(origin, links, constraints, shapes = shapes, g=0.0)
-setPosition!(origin,link1,p2 = p2,Δq = UnitQuaternion(RotX(ϕ+pi-0.1)))
+setPosition!(origin,link1,p2 = p2,Δq = UnitQuaternion(RotX(ϕ+pi-0.5)))
 
 xd=[zeros(3)]
 vd=[zeros(3)]
