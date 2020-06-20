@@ -28,19 +28,16 @@ constraints = [joint_between_origin_and_link1]
 shapes = [box]
 
 
-mech = Mechanism(origin, links, constraints, shapes = shapes, g=0.0)
-setPosition!(origin,link1,p2 = p2,Δq = UnitQuaternion(RotX(ϕ+pi-0.5)))
+mech = Mechanism(origin, links, constraints, shapes = shapes)
+setPosition!(origin,link1,p2 = p2,Δq = UnitQuaternion(RotX(ϕ+pi-0.2)))
 
-xd=[zeros(3)]
-vd=[zeros(3)]
+xd=[[0;0;0.5]]
 qd=[UnitQuaternion(RotX(ϕ+pi))]
-ωd=[zeros(3)]
 
 Q = [diagm(ones(12))*0.0]
-Q[1][7,7]=1.0
+Q[1][7,7] = 1000.0
+Q[1][10,10] = 100.0
 R = [ones(1,1)]
-
-A, B, G = linearsystem(mech, xd, vd, qd, ωd, [[0.]], getid.(links), getid.(constraints))
 
 lqr = LQR(mech, getid.(links), getid.(constraints), Q, R, 10., xd=xd, qd=qd)
 

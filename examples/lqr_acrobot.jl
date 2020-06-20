@@ -31,22 +31,20 @@ shapes = [box]
 
 
 mech = Mechanism(origin, links, constraints, shapes = shapes, g=0.)
-setPosition!(origin,link1,p2 = p2,Δq = UnitQuaternion(RotX(ϕ+pi-0.3)))
-setPosition!(link1,link2,p1=-p2,p2 = p2,Δq = UnitQuaternion(RotX(ϕ+0.5)))
+setPosition!(origin,link1,p2 = p2,Δq = UnitQuaternion(RotX(ϕ+pi-0.2)))
+setPosition!(link1,link2,p1=-p2,p2 = p2,Δq = UnitQuaternion(RotX(ϕ+0.3)))
 
-xd=[zeros(3) for i=1:2]
-vd=[zeros(3) for i=1:2]
+xd=[[p2];[p2+p2+p2]]
 qd=[[UnitQuaternion(RotX(ϕ+pi))];[UnitQuaternion(RotX(ϕ+pi))]]
-ωd=[zeros(3) for i=1:2]
 
 Q = [diagm(ones(12))*0.0 for i=1:2]
-Q[1][7,7]=1.0
-Q[2][7,7]=1.0
+Q[1][7,7]=100.0
+Q[1][10,10]=10.0
+Q[2][7,7]=100.0
+Q[2][10,10]=10.0
 R = [ones(1,1)]
 
-A, B, G = linearsystem(mech, xd, vd, qd, ωd, [[0.]], getid.(links), [getid(constraints[2])])
-
-lqr = LQR(mech, getid.(links), [getid(constraints[2])], Q, R, 10., xd=xd, qd=qd)
+lqr = LQR(mech, getid.(links), [getid(constraints[2])], Q, R, 10.,  qd=qd)
 
 
 storage = simulate!(mech,10.,lqr,record = true)
