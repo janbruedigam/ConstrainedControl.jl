@@ -1,18 +1,20 @@
 using ConstrainedDynamics
+using ConstrainedDynamicsVis
 using ConstrainedControl
+using LinearAlgebra
+
 
 # Parameters
 joint_axis = [1.0;0.0;0.0]
 
 length1 = 1.0
 width, depth = 0.1, 0.1
-box = Box(width, depth, length1, length1, color = RGBA(1., 1., 0.))
+box = Box(width, depth, length1, length1)
 
-p2 = [0.0;0.0;length1 / 2] # joint connection point
+p2 = [0.0;0.0;length1/2] # joint connection point
+ϕ = 0.
 
 # Initial orientation
-ϕ1 = 0
-q1 = Quaternion(RotX(ϕ1))
 
 # Links
 origin = Origin{Float64}()
@@ -27,10 +29,18 @@ shapes = [box]
 
 
 mech = Mechanism(origin, links, constraints, shapes = shapes)
-setPosition!(origin,link1,p2 = p2,Δq = q1)
+setPosition!(origin,link1,p2 = p2,Δq = UnitQuaternion(RotX(ϕ+pi-0.2)))
 
-pid = PID(mech, joint_between_origin_and_link1.id, pi/2, P = 10., I = 10., D = 5.)
+xd=[[0;0;0.5]]
+qd=[UnitQuaternion(RotX(ϕ+pi))]
+
+Q = [diagm(ones(12))*0.0]
+Q[1][7,7] = 1000.0
+Q[1][10,10] = 100.0
+R = [ones(1,1)]
+
+lqr = LQR(mech, getid.(links), getid.(constraints), Q, R, 10., xd=xd, qd=qd)
 
 
-storage = simulate!(mech,10.,pid,record = true)
+storage = simulate!(mech,10.,lqr,record = true)
 visualize(mech,storage,shapes)

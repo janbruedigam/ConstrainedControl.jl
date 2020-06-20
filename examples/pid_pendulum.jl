@@ -1,4 +1,5 @@
 using ConstrainedDynamics
+using ConstrainedDynamicsVis
 using ConstrainedControl
 
 # Parameters
@@ -12,29 +13,24 @@ p2 = [0.0;0.0;length1 / 2] # joint connection point
 
 # Initial orientation
 ϕ1 = 0
-q1 = Quaternion(RotX(ϕ1))
-ϕ2 = 0
-q2 = Quaternion(RotX(ϕ2))
+q1 = UnitQuaternion(RotX(ϕ1))
 
 # Links
 origin = Origin{Float64}()
 link1 = Body(box)
-link2 = Body(box)
 
 # Constraints
-joint1 = EqualityConstraint(Revolute(origin, link1, joint_axis; p2=p2))
-joint2 = EqualityConstraint(Revolute(link1, link2, joint_axis; p1=-p2, p2=p2))
+joint_between_origin_and_link1 = EqualityConstraint(Revolute(origin, link1, joint_axis; p2=p2))
 
-links = [link1;link2]
-constraints = [joint1;joint2]
+links = [link1]
+constraints = [joint_between_origin_and_link1]
 shapes = [box]
 
 
 mech = Mechanism(origin, links, constraints, shapes = shapes)
 setPosition!(origin,link1,p2 = p2,Δq = q1)
-setPosition!(link1,link2,p1=-p2,p2 = p2,Δq = q2)
 
-pid = PID(mech, getfield.(constraints,:id), [pi/2;-pi/4], P = [10.;10.], I = [10.;10], D = [5.;5.])
+pid = PID(mech, joint_between_origin_and_link1.id, pi/2, P = 10., I = 10., D = 5.)
 
 
 storage = simulate!(mech,10.,pid,record = true)

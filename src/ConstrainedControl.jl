@@ -1,9 +1,10 @@
 module ConstrainedControl
 
 using ConstrainedDynamics
-using ConstrainedDynamics: minimalCoordinates, geteqconstraint
+using ConstrainedDynamics: svcat
 using LinearAlgebra
 using StaticArrays
+using Rotations
 
 export PID,
     LQR,
@@ -14,6 +15,6 @@ export PID,
 include(joinpath("util","util.jl"))
 include(joinpath("control","pid.jl"))
 include(joinpath("control","lqr.jl"))
-include(joinpath("control","ilqr.jl"))
+# include(joinpath("control","ilqr.jl"))
 
 end
