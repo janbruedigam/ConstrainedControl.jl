@@ -1,7 +1,7 @@
 name = "ConstrainedControl"
 uuid = "5933d0f4-dc4a-46ce-a189-54b4465bd7a4"
 authors = ["Jan Bruedigam"]
-version = "0.1.0"
+version = "0.0.1"
 
 [deps]
 ConstrainedDynamics = "65b0d8a9-e9fd-4f02-8653-a7163c490b26"
@@ -10,13 +10,15 @@ Rotations = "6038ab10-8711-5258-84ad-4b1120ba62dc"
 StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
 
 [compat]
-ConstrainedDynamics = "0.3.0"
+ConstrainedDynamics = "0.4.0"
 Rotations = "1.0.0, 1.0.1"
 StaticArrays = "0.12.0, 0.12.3"
-julia = "1.0"
+julia = "1.0, 1.4"
 
 [extras]
+BenchmarkTools = "6e4b80f9-dd63-53aa-95a3-0cdb28fa8baf"
+SafeTestsets = "1bc83da4-3b8d-516f-aca4-4fe02f6d838f"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]
-test = ["Test"]
+test = ["Test", "SafeTestsets", "BenchmarkTools"]

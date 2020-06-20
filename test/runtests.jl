@@ -1,6 +1,6 @@
-using ConstrainedControl
 using Test
+using SafeTestsets
 
-@testset "ConstrainedControl.jl" begin
-    # Write your own tests here.
+@safetestset "Example Tests" begin
+    include("example_test.jl")
 end
