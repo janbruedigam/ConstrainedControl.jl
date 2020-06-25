@@ -1,5 +1,7 @@
 using ConstrainedDynamics
 using ConstrainedDynamicsVis
+using ConstrainedControl
+using LinearAlgebra
 
 
 path = "examples/examples_files/sawyer_arm.urdf"
