@@ -6,6 +6,7 @@ files = [
     "lqr_prismatic"
     "pid_doublependulum"
     "pid_pendulum"
+    "sawyer"
 ]
 
 for file in files
