@@ -1,7 +1,6 @@
 # TODO
 # Only for constant reference trajectories
 # Only for 1dof joints
-# Only finite horizon
 mutable struct LQR{T,N,NK} <: Controller
     K::Vector{Vector{SMatrix{1,NK,T,NK}}} # for each time step and each eqc
 
@@ -36,15 +35,20 @@ mutable struct LQR{T,N,NK} <: Controller
         end
 
         # linearize        
-        A, B, _ = linearsystem(mechanism, xd, vd, qd, ωd, Fτd, bodyids, eqcids)
+        A, Bu, Bλ, G = linearsystem(mechanism, xd, vd, qd, ωd, Fτd, bodyids, eqcids)
 
         Q = cat(Q...,dims=(1,2))
         R = cat(R...,dims=(1,2))
 
         # calculate K
-        K = dlqr(A, B, Q, R, N)
+        if size(G)[1] == 0
+            @assert size(Bλ)[2] ==0
+            Ku = dlqr(A, Bu, Q, R, N)
+        else
+            Ku = dlqr(A, Bu, Bλ, G, Q, R, N)
+        end
         
-        new{T, N, size(K[1][1])[2]}(K, xd, vd, qd, ωd, eqcids, Fτd, control_lqr!)
+        new{T, N, size(Ku[1][1])[2]}(Ku, xd, vd, qd, ωd, eqcids, Fτd, control_lqr!)
     end
 end
 
@@ -87,7 +91,7 @@ function control_lqr!(mechanism::Mechanism{T,Nn,Nb}, lqr::LQR{T,Inf}, k) where {
         Δz[colq] = ConstrainedDynamics.VLᵀmat(lqr.qd[id]) * Rotations.params(state.qsol[2])
         Δz[colω] = state.ωsol[2]-lqr.ωd[id]
     end
-    
+
     for (i,id) in enumerate(lqr.eqcids)
         u = lqr.Fτd[i] - lqr.K[1][i]*Δz
         setForce!(mechanism, geteqconstraint(mechanism, id), u)
@@ -102,21 +106,60 @@ function dlqr(A,B,Q,R,N)
         K = (R+B'*P*B)\B'*P*A
         return [[K[i:i,:] for i=1:size(K)[1]]]
     else
-        m = size(B)[2]
-        K = [[zeros(1,size(Q)[1]) for j=1:m] for i=1:N-1]
-        Pk = Q
-
-        for k=N-1:-1:1
-            C = R + B'*Pk*B
-            invC = inv(C)
-            
-            Kk = invC*B'*Pk*A
-            for i=1:m
-                K[k][i] = Kk[i:i,:]
-            end
-
-            Pk = A'*Pk*A - A'*Pk*B*Kk + Q
-        end
-        return K
+        return dlqr(A,B,zeros(size(A)[1],0),zeros(0,size(A)[1]),Q,R,N)
     end
+end
+
+function dlqr(A,Bu,Bλ,G,Q,R,N)
+    infflag = false
+    if N == Inf
+        infflag = true
+        N = 1000
+    end
+
+    mx = size(A)[2]
+    mu = size(Bu)[2]
+    mλ = size(Bλ)[2]
+    Ku = [[zeros(1,size(Q)[1]) for j=1:mu] for i=1:N-1]
+    Kλ = [[zeros(1,size(Q)[1]) for j=1:mλ] for i=1:N-1]
+    Pk = Q
+
+    k = 0
+    for outer k=N-1:-1:1
+        M11 = R + Bu'*Pk*Bu
+        M12 = Bu'*Pk*Bλ
+        M21 = G*Bu
+        M22 = G*Bλ
+
+        M = [M11 M12;M21 M22]
+        b = [Bu'*Pk;G]*A
+
+        Kk = M\b
+
+        for i=1:mu
+            Ku[k][i] = Kk[i:i,:]
+        end
+
+        Kuk = Kk[1:mu,:]
+        Kλk = Kk[mu+1:mu+mλ,:]
+
+        Abar = A-Bu*Kuk-Bλ*Kλk
+        Pkp1 = Q + Kuk'*R*Kuk + Abar'*Pk*Abar
+
+        if infflag && norm(Pk-Pkp1) < 1e-5
+            break
+        end
+
+        Pk = Pkp1
+    end
+
+    if infflag
+        if k==1
+            @info "Riccati recursion did not converge."
+        else
+            Ku = [Ku[k]]
+        end
+    end
+
+    return Ku
 end

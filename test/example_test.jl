@@ -4,9 +4,9 @@ files = [
     "lqr_acrobot"
     "lqr_pendulum"
     "lqr_prismatic"
+    "lqr_sawyer"
     "pid_doublependulum"
     "pid_pendulum"
-    "sawyer"
 ]
 
 for file in files
