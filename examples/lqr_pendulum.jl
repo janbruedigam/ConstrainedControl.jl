@@ -29,9 +29,9 @@ shapes = [box]
 
 
 mech = Mechanism(origin, links, constraints, shapes = shapes)
-setPosition!(origin,link1,p2 = p2,Δq = UnitQuaternion(RotX(ϕ+pi-0.2)))
+setPosition!(origin,link1,p2 = p2,Δq = UnitQuaternion(RotX(ϕ+pi-0.4)))
 
-xd=[[0;0;0.5]]
+xd=[[0;0.;0.5]]
 qd=[UnitQuaternion(RotX(ϕ+pi))]
 
 Q = [diagm(ones(12))*0.0]
@@ -41,6 +41,8 @@ R = [ones(1,1)]
 
 lqr = LQR(mech, getid.(links), getid.(constraints), Q, R, 10., xd=xd, qd=qd)
 
+steps = Base.OneTo(1000)
+storage = Storage{Float64}(steps,length(mech.bodies))
 
-storage = simulate!(mech,10.,lqr,record = true)
+simulate!(mech,storage,lqr,record = true)
 visualize(mech,storage,shapes)

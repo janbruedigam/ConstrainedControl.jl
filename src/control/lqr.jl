@@ -36,15 +36,15 @@ mutable struct LQR{T,N,NK} <: Controller
         end
 
         # linearize        
-        A, B, _ = linearsystem(mechanism, xd, vd, qd, ωd, Fτd, bodyids, eqcids)
+        A, Bu, Bλ, G = linearsystem(mechanism, xd, vd, qd, ωd, Fτd, bodyids, eqcids)
 
         Q = cat(Q...,dims=(1,2))
         R = cat(R...,dims=(1,2))
 
         # calculate K
-        K = dlqr(A, B, Q, R, N)
+        Ku = dlqr(A, Bu, Bλ, G, Q, R, N)
         
-        new{T, N, size(K[1][1])[2]}(K, xd, vd, qd, ωd, eqcids, Fτd, control_lqr!)
+        new{T, N, size(Ku[1][1])[2]}(Ku, xd, vd, qd, ωd, eqcids, Fτd, control_lqr!)
     end
 end
 
@@ -65,7 +65,8 @@ function control_lqr!(mechanism::Mechanism{T,Nn,Nb}, lqr::LQR{T,N}, k) where {T,
 
     if k<N
         for (i,id) in enumerate(lqr.eqcids)
-            u = lqr.Fτd[i] - lqr.K[k][i]*Δz
+            # u = lqr.Fτd[i] - lqr.K[k][i]*Δz
+            u = lqr.Fτd[i] - lqr.K[1][i]*Δz
             setForce!(mechanism, geteqconstraint(mechanism, id), u)
         end
     end
@@ -73,50 +74,70 @@ function control_lqr!(mechanism::Mechanism{T,Nn,Nb}, lqr::LQR{T,N}, k) where {T,
     return
 end
 
-function control_lqr!(mechanism::Mechanism{T,Nn,Nb}, lqr::LQR{T,Inf}, k) where {T,Nn,Nb}
-    Δz = zeros(T,Nb*12)
-    for (id,body) in pairs(mechanism.bodies)
-        colx = (id-1)*12+1:(id-1)*12+3
-        colv = (id-1)*12+4:(id-1)*12+6
-        colq = (id-1)*12+7:(id-1)*12+9
-        colω = (id-1)*12+10:(id-1)*12+12
+# function control_lqr!(mechanism::Mechanism{T,Nn,Nb}, lqr::LQR{T,Inf}, k) where {T,Nn,Nb}
+#     Δz = zeros(T,Nb*12)
+#     for (id,body) in pairs(mechanism.bodies)
+#         colx = (id-1)*12+1:(id-1)*12+3
+#         colv = (id-1)*12+4:(id-1)*12+6
+#         colq = (id-1)*12+7:(id-1)*12+9
+#         colω = (id-1)*12+10:(id-1)*12+12
 
-        state = body.state
-        Δz[colx] = state.xsol[2]-lqr.xd[id]
-        Δz[colv] = state.vsol[2]-lqr.vd[id]
-        Δz[colq] = ConstrainedDynamics.VLᵀmat(lqr.qd[id]) * Rotations.params(state.qsol[2])
-        Δz[colω] = state.ωsol[2]-lqr.ωd[id]
-    end
+#         state = body.state
+#         Δz[colx] = state.xsol[2]-lqr.xd[id]
+#         Δz[colv] = state.vsol[2]-lqr.vd[id]
+#         Δz[colq] = ConstrainedDynamics.VLᵀmat(lqr.qd[id]) * Rotations.params(state.qsol[2])
+#         Δz[colω] = state.ωsol[2]-lqr.ωd[id]
+#     end
     
-    for (i,id) in enumerate(lqr.eqcids)
-        u = lqr.Fτd[i] - lqr.K[1][i]*Δz
-        setForce!(mechanism, geteqconstraint(mechanism, id), u)
-    end
+#     for (i,id) in enumerate(lqr.eqcids)
+#         u = lqr.Fτd[i] - lqr.K[1][i]*Δz
+#         setForce!(mechanism, geteqconstraint(mechanism, id), u)
+#     end
 
-    return
-end
+#     return
+# end
 
-function dlqr(A,B,Q,R,N)
-    if N==Inf
-        P = dare(A,B,Q,R)
-        K = (R+B'*P*B)\B'*P*A
-        return [[K[i:i,:] for i=1:size(K)[1]]]
-    else
-        m = size(B)[2]
-        K = [[zeros(1,size(Q)[1]) for j=1:m] for i=1:N-1]
+function dlqr(A,Bu,Bλ,G,Q,R,N)
+    # if N==Inf
+    #     P = dare(A,B,Q,R)
+    #     K = (R+B'*P*B)\B'*P*A
+    #     return [[K[i:i,:] for i=1:size(K)[1]]]
+    # else
+
+        mx = size(A)[2]
+        mu = size(Bu)[2]
+        mλ = size(Bλ)[2]
+        Ku = [[zeros(1,size(Q)[1]) for j=1:mu] for i=1:N-1]
+        Kλ = [[zeros(1,size(Q)[1]) for j=1:mλ] for i=1:N-1]
         Pk = Q
 
         for k=N-1:-1:1
-            C = R + B'*Pk*B
-            invC = inv(C)
-            
-            Kk = invC*B'*Pk*A
-            for i=1:m
-                K[k][i] = Kk[i:i,:]
-            end
+            M11 = R + Bu'*Pk*Bu
+            M12 = Bu'*Pk*Bλ
+            M21 = G*Bu
+            M22 = G*Bλ
 
-            Pk = A'*Pk*A - A'*Pk*B*Kk + Q
+            M = [M11 M12;M21 M22]
+            b = [Bu'*Pk;G]*A
+
+            Kk = M\b
+
+            for i=1:mu
+                Ku[k][i] = Kk[i:i,:]
+            end
+            # for i=mu+1:mu+mλ
+            #     Kλ[k][i-mu] = Kk[i:i,:]
+            #     kλ[k][i-mu] = kk[i:i]
+            # end
+
+            Kuk = Kk[1:mu,:]
+            Kλk = Kk[mu+1:mu+mλ,:]
+
+            Abar = A-Bu*Kuk-Bλ*Kλk
+            Pkp1 = Q + Kuk'*R*Kuk + Abar'*Pk*Abar
+
+            Pk = Pkp1
         end
-        return K
-    end
+        return Ku
+    # end
 end

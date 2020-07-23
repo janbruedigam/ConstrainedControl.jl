@@ -30,7 +30,7 @@ constraints = [joint1;joint2]
 shapes = [box]
 
 
-mech = Mechanism(origin, links, constraints, shapes = shapes, g=0.0)
+mech = Mechanism(origin, links, constraints, shapes = shapes, g=0)
 setPosition!(origin,link1,p2 = p2,Δq = UnitQuaternion(RotX(ϕ+pi+1.0)))
 setPosition!(link1,link2,p1=-p2,p2 = p2,Δq = UnitQuaternion(RotX(ϕ-0.5)))
 

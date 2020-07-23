@@ -5,7 +5,7 @@ using LinearAlgebra
 
 
 path = "examples/examples_files/sawyer_arm.urdf"
-mech, shapes = Mechanism(path, floating=false, g = -0.0)
+mech, shapes = Mechanism(path, floating=false, g = -0.5)
 
 setPosition!(mech,mech.eqconstraints["right_j0"],[0.0])
 setPosition!(mech,mech.eqconstraints["right_j1"],[-pi/2])
@@ -27,6 +27,7 @@ R = [ones(1,1) for i=1:7]
 ConstrainedDynamics.deactivateConstraints!(mech)
 lqr = LQR(mech, getid.(mech.bodies), getid.(mech.eqconstraints), Q, R, 20., xd=xd, qd=qd)
 ConstrainedDynamics.activateConstraints!(mech)
+mech.g = -0.5
 
 
 storage = simulate!(mech,20.,lqr,record = true)
