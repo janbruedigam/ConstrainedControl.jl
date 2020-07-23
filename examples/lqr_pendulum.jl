@@ -41,8 +41,6 @@ R = [ones(1,1)]
 
 lqr = LQR(mech, getid.(links), getid.(constraints), Q, R, Inf, xd=xd, qd=qd)
 
-steps = Base.OneTo(1000)
-storage = Storage{Float64}(steps,length(mech.bodies))
 
-simulate!(mech,storage,lqr,record = true)
+storage = simulate!(mech,10,lqr,record = true)
 visualize(mech,storage,shapes)
