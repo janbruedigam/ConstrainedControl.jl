@@ -39,7 +39,7 @@ Q[1][7,7] = 1000.0
 Q[1][10,10] = 100.0
 R = [ones(1,1)]
 
-lqr = LQR(mech, getid.(links), getid.(constraints), Q, R, 10., xd=xd, qd=qd)
+lqr = LQR(mech, getid.(links), getid.(constraints), Q, R, Inf, xd=xd, qd=qd)
 
 steps = Base.OneTo(1000)
 storage = Storage{Float64}(steps,length(mech.bodies))

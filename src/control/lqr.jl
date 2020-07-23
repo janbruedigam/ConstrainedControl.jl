@@ -1,7 +1,6 @@
 # TODO
 # Only for constant reference trajectories
 # Only for 1dof joints
-# Only finite horizon
 mutable struct LQR{T,N,NK} <: Controller
     K::Vector{Vector{SMatrix{1,NK,T,NK}}} # for each time step and each eqc
 
@@ -42,7 +41,12 @@ mutable struct LQR{T,N,NK} <: Controller
         R = cat(R...,dims=(1,2))
 
         # calculate K
-        Ku = dlqr(A, Bu, Bλ, G, Q, R, N)
+        if size(G)[1] == 0
+            @assert size(Bλ)[2] ==0
+            Ku = dlqr(A, Bu, Q, R, N)
+        else
+            Ku = dlqr(A, Bu, Bλ, G, Q, R, N)
+        end
         
         new{T, N, size(Ku[1][1])[2]}(Ku, xd, vd, qd, ωd, eqcids, Fτd, control_lqr!)
     end
@@ -65,8 +69,7 @@ function control_lqr!(mechanism::Mechanism{T,Nn,Nb}, lqr::LQR{T,N}, k) where {T,
 
     if k<N
         for (i,id) in enumerate(lqr.eqcids)
-            # u = lqr.Fτd[i] - lqr.K[k][i]*Δz
-            u = lqr.Fτd[i] - lqr.K[1][i]*Δz
+            u = lqr.Fτd[i] - lqr.K[k][i]*Δz
             setForce!(mechanism, geteqconstraint(mechanism, id), u)
         end
     end
@@ -74,70 +77,89 @@ function control_lqr!(mechanism::Mechanism{T,Nn,Nb}, lqr::LQR{T,N}, k) where {T,
     return
 end
 
-# function control_lqr!(mechanism::Mechanism{T,Nn,Nb}, lqr::LQR{T,Inf}, k) where {T,Nn,Nb}
-#     Δz = zeros(T,Nb*12)
-#     for (id,body) in pairs(mechanism.bodies)
-#         colx = (id-1)*12+1:(id-1)*12+3
-#         colv = (id-1)*12+4:(id-1)*12+6
-#         colq = (id-1)*12+7:(id-1)*12+9
-#         colω = (id-1)*12+10:(id-1)*12+12
+function control_lqr!(mechanism::Mechanism{T,Nn,Nb}, lqr::LQR{T,Inf}, k) where {T,Nn,Nb}
+    Δz = zeros(T,Nb*12)
+    for (id,body) in pairs(mechanism.bodies)
+        colx = (id-1)*12+1:(id-1)*12+3
+        colv = (id-1)*12+4:(id-1)*12+6
+        colq = (id-1)*12+7:(id-1)*12+9
+        colω = (id-1)*12+10:(id-1)*12+12
 
-#         state = body.state
-#         Δz[colx] = state.xsol[2]-lqr.xd[id]
-#         Δz[colv] = state.vsol[2]-lqr.vd[id]
-#         Δz[colq] = ConstrainedDynamics.VLᵀmat(lqr.qd[id]) * Rotations.params(state.qsol[2])
-#         Δz[colω] = state.ωsol[2]-lqr.ωd[id]
-#     end
-    
-#     for (i,id) in enumerate(lqr.eqcids)
-#         u = lqr.Fτd[i] - lqr.K[1][i]*Δz
-#         setForce!(mechanism, geteqconstraint(mechanism, id), u)
-#     end
+        state = body.state
+        Δz[colx] = state.xsol[2]-lqr.xd[id]
+        Δz[colv] = state.vsol[2]-lqr.vd[id]
+        Δz[colq] = ConstrainedDynamics.VLᵀmat(lqr.qd[id]) * Rotations.params(state.qsol[2])
+        Δz[colω] = state.ωsol[2]-lqr.ωd[id]
+    end
 
-#     return
-# end
+    for (i,id) in enumerate(lqr.eqcids)
+        u = lqr.Fτd[i] - lqr.K[1][i]*Δz
+        setForce!(mechanism, geteqconstraint(mechanism, id), u)
+    end
+
+    return
+end
+
+function dlqr(A,B,Q,R,N)
+    if N==Inf
+        P = dare(A,B,Q,R)
+        K = (R+B'*P*B)\B'*P*A
+        return [[K[i:i,:] for i=1:size(K)[1]]]
+    else
+        return dlqr(A,B,zeros(size(A)[1],0),zeros(0,size(A)[1]),Q,R,N)
+    end
+end
 
 function dlqr(A,Bu,Bλ,G,Q,R,N)
-    # if N==Inf
-    #     P = dare(A,B,Q,R)
-    #     K = (R+B'*P*B)\B'*P*A
-    #     return [[K[i:i,:] for i=1:size(K)[1]]]
-    # else
+    infflag = false
+    if N == Inf
+        infflag = true
+        N = 1000
+    end
 
-        mx = size(A)[2]
-        mu = size(Bu)[2]
-        mλ = size(Bλ)[2]
-        Ku = [[zeros(1,size(Q)[1]) for j=1:mu] for i=1:N-1]
-        Kλ = [[zeros(1,size(Q)[1]) for j=1:mλ] for i=1:N-1]
-        Pk = Q
+    mx = size(A)[2]
+    mu = size(Bu)[2]
+    mλ = size(Bλ)[2]
+    Ku = [[zeros(1,size(Q)[1]) for j=1:mu] for i=1:N-1]
+    Kλ = [[zeros(1,size(Q)[1]) for j=1:mλ] for i=1:N-1]
+    Pk = Q
 
-        for k=N-1:-1:1
-            M11 = R + Bu'*Pk*Bu
-            M12 = Bu'*Pk*Bλ
-            M21 = G*Bu
-            M22 = G*Bλ
+    k = 0
+    for outer k=N-1:-1:1
+        M11 = R + Bu'*Pk*Bu
+        M12 = Bu'*Pk*Bλ
+        M21 = G*Bu
+        M22 = G*Bλ
 
-            M = [M11 M12;M21 M22]
-            b = [Bu'*Pk;G]*A
+        M = [M11 M12;M21 M22]
+        b = [Bu'*Pk;G]*A
 
-            Kk = M\b
+        Kk = M\b
 
-            for i=1:mu
-                Ku[k][i] = Kk[i:i,:]
-            end
-            # for i=mu+1:mu+mλ
-            #     Kλ[k][i-mu] = Kk[i:i,:]
-            #     kλ[k][i-mu] = kk[i:i]
-            # end
-
-            Kuk = Kk[1:mu,:]
-            Kλk = Kk[mu+1:mu+mλ,:]
-
-            Abar = A-Bu*Kuk-Bλ*Kλk
-            Pkp1 = Q + Kuk'*R*Kuk + Abar'*Pk*Abar
-
-            Pk = Pkp1
+        for i=1:mu
+            Ku[k][i] = Kk[i:i,:]
         end
-        return Ku
-    # end
+
+        Kuk = Kk[1:mu,:]
+        Kλk = Kk[mu+1:mu+mλ,:]
+
+        Abar = A-Bu*Kuk-Bλ*Kλk
+        Pkp1 = Q + Kuk'*R*Kuk + Abar'*Pk*Abar
+
+        if infflag && norm(Pk-Pkp1) < 1e-5
+            break
+        end
+
+        Pk = Pkp1
+    end
+
+    if infflag
+        if k==1
+            @info "Riccati recursion did not converge."
+        else
+            Ku = [Ku[k]]
+        end
+    end
+
+    return Ku
 end
