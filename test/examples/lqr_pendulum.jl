@@ -5,11 +5,12 @@ using LinearAlgebra
 
 # Parameters
 joint_axis = [1.0;0.0;0.0]
-p2 = [0.0;0.0;length1/2] # joint connection point
 
 length1 = 1.0
 width, depth = 0.1, 0.1
 box = Box(width, depth, length1, length1)
+
+p2 = [0.0;0.0;length1/2] # joint connection point
 
 # Desired orientation
 ϕ = 0.

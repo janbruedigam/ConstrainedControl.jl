@@ -7,13 +7,14 @@ using Rotations
 
 # Parameters
 joint_axis = [1.0;0.0;0.0]
-p2a = [0.0;0.0;length1/2] # joint connection point
-p2b = [0.0;0.0;length1] # joint connection point
 
 length1 = 1.0
 width, depth = 0.1, 0.1
 box1 = Box(width, depth, length1, length1)
 box2 = Box(width, depth, length1*2, length1)
+
+p2a = [0.0;0.0;length1/2] # joint connection point
+p2b = [0.0;0.0;length1] # joint connection point
 
 # Desired orientation
 ϕ1 = pi
