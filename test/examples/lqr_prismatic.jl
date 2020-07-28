@@ -25,8 +25,8 @@ shapes = [box]
 mech = Mechanism(origin, links, constraints, shapes = shapes, g=0.)
 setPosition!(origin,link1,Δx = [1.0;0;0])
 
-Q = [diagm(ones(12))]
-R = [ones(1,1)]
+Q = ones(1)
+R = ones(1)
 
-lqr = LQR(mech, getid.(links), getid.(constraints), Q, R, 10.)
+lqr = LQR(mech, getid.(constraints), getid.(constraints), Q, R, 10.)
 @test true

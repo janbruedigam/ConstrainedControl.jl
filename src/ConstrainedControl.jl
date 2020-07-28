@@ -1,7 +1,7 @@
 module ConstrainedControl
 
 using ConstrainedDynamics
-using ConstrainedDynamics: svcat
+using ConstrainedDynamics: svcat, szeros
 using LinearAlgebra
 using StaticArrays
 using Rotations
