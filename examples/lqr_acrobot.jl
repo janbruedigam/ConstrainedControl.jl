@@ -7,17 +7,17 @@ using Rotations
 
 # Parameters
 joint_axis = [1.0;0.0;0.0]
+p2a = [0.0;0.0;length1/2] # joint connection point
+p2b = [0.0;0.0;length1] # joint connection point
 
 length1 = 1.0
 width, depth = 0.1, 0.1
 box1 = Box(width, depth, length1, length1)
 box2 = Box(width, depth, length1*2, length1)
 
-p2a = [0.0;0.0;length1/2] # joint connection point
-p2b = [0.0;0.0;length1] # joint connection point
-ϕ = 0.
-
-# Initial orientation
+# Desired orientation
+ϕ1 = pi
+ϕ2 = pi
 
 # Links
 origin = Origin{Float64}()
@@ -34,11 +34,11 @@ shapes = [box1;box2]
 
 
 mech = Mechanism(origin, links, constraints, shapes = shapes, g=-9.81)
-setPosition!(origin,link1,p2 = p2a,Δq = UnitQuaternion(RotX(ϕ+pi+0.1)))
-setPosition!(link1,link2,p1=-p2a,p2 = p2b,Δq = UnitQuaternion(RotX(ϕ-0.1)))
+setPosition!(origin,link1,p2 = p2a,Δq = UnitQuaternion(RotX(ϕ1-0.1)))
+setPosition!(link1,link2,p1=-p2a,p2 = p2b,Δq = UnitQuaternion(RotX(0.1)))
 
 xd = [[[0;0;0.5]];[[0;0;2.0]]]
-qd=[[UnitQuaternion(RotX(ϕ+pi))];[UnitQuaternion(RotX(ϕ+pi))]]
+qd=[[UnitQuaternion(RotX(ϕ1))];[UnitQuaternion(RotX(ϕ2))]]
 
 Q = [diagm(ones(12))*0.0 for i=1:2]
 Q[1][7,7]=1.0
