@@ -50,6 +50,42 @@ mutable struct LQR{T,N,NK} <: Controller
         
         new{T, N, size(Ku[1][1])[2]}(Ku, xd, vd, qd, ωd, eqcids, Fτd, control_lqr!)
     end
+
+    function LQR(mechanism::Mechanism{T,Nn,Nb}, controlledids::AbstractVector{<:Integer}, controlids::AbstractVector{<:Integer},
+        Q::AbstractVector{T}, R::AbstractVector{T}, horizon;
+        xθd::AbstractVector{T} = szeros(T,length(controlledids)), 
+        vωd::AbstractVector{T} = szeros(T,length(controlledids)),
+        Fτd::AbstractVector{T} = szeros(T,length(controlids))
+    ) where {T, Nn, Nb}
+
+    @assert length(controlledids) == length(Q) == length(xθd) == length(vωd) == Nb "Missmatched length for bodies"
+    @assert length(controlids) == length(R) == length(Fτd) "Missmatched length for constraints"
+
+    Δt = mechanism.Δt
+    
+    N = horizon/Δt
+    if N<Inf
+        N = Integer(ceil(horizon/Δt))
+    end
+
+    # linearize        
+    A, Bu, Bλ, G, xd, vd, qd, ωd = linearsystem(mechanism, xθd, vωd, Fτd, controlledids, controlids)
+
+    Q = [diagm(ones(12))*Q[i] for i=1:length(Q)]
+    R = [diagm(ones(1))*R[i] for i=1:length(R)]
+    Q = cat(Q...,dims=(1,2))
+    R = cat(R...,dims=(1,2))
+
+    # calculate K
+    if size(G)[1] == 0
+        @assert size(Bλ)[2] ==0
+        Ku = dlqr(A, Bu, Q, R, N)
+    else
+        Ku = dlqr(A, Bu, Bλ, G, Q, R, N)
+    end
+    
+    new{T, N, size(Ku[1][1])[2]}(Ku, xd, vd, qd, ωd, controlids, [[Fτd[i]] for i=1:length(Fτd)], control_lqr!)
+end
 end
 
 function control_lqr!(mechanism::Mechanism{T,Nn,Nb}, lqr::LQR{T,N}, k) where {T,Nn,Nb,N}
