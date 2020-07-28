@@ -12,9 +12,9 @@ width, depth = 0.1, 0.1
 box = Box(width, depth, length1, length1)
 
 p2 = [0.0;0.0;length1/2] # joint connection point
-ϕ = 0.
 
-# Initial orientation
+# Desired orientation
+ϕ = 0.
 
 # Links
 origin = Origin{Float64}()
