@@ -32,6 +32,9 @@ mutable struct LQR{T,N,NK} <: Controller
         N = horizon/Δt
         if N<Inf
             N = Integer(ceil(horizon/Δt))
+            Ntemp = N
+        else
+            Ntemp = Integer(ceil(10/Δt)) # 10 second time horizon as maximal horizon for convergence for Inf
         end
 
         # linearize        
@@ -43,9 +46,14 @@ mutable struct LQR{T,N,NK} <: Controller
         # calculate K
         if size(G)[1] == 0
             @assert size(Bλ)[2] ==0
-            Ku = dlqr(A, Bu, Q, R, N)
+            Ku = dlqr(A, Bu, Q, R, N) # can be calculated directly
         else
-            Ku = dlqr(A, Bu, Bλ, G, Q, R, N)
+            Ku = dlqr(A, Bu, Bλ, G, Q, R, Ntemp)
+            if Ku[1] != Ku[2]
+                @info "Riccati recursion did not converge."
+            else
+                Ku = [Ku[1]]
+            end
         end
         
         new{T, N, size(Ku[1][1])[2]}(Ku, xd, vd, qd, ωd, eqcids, Fτd, control_lqr!)
@@ -66,6 +74,9 @@ mutable struct LQR{T,N,NK} <: Controller
     N = horizon/Δt
     if N<Inf
         N = Integer(ceil(horizon/Δt))
+        Ntemp = N
+    else
+        Ntemp = Integer(ceil(10/Δt)) # 10 second time horizon as maximal horizon for convergence for Inf
     end
 
     # linearize        
@@ -79,9 +90,14 @@ mutable struct LQR{T,N,NK} <: Controller
     # calculate K
     if size(G)[1] == 0
         @assert size(Bλ)[2] ==0
-        Ku = dlqr(A, Bu, Q, R, N)
+        Ku = dlqr(A, Bu, Q, R, N) # can be calculated directly
     else
-        Ku = dlqr(A, Bu, Bλ, G, Q, R, N)
+        Ku = dlqr(A, Bu, Bλ, G, Q, R, Ntemp)
+        if Ku[1] != Ku[2]
+            @info "Riccati recursion did not converge."
+        else
+            Ku = [Ku[1]]
+        end
     end
     
     new{T, N, size(Ku[1][1])[2]}(Ku, xd, vd, qd, ωd, controlids, [[Fτd[i]] for i=1:length(Fτd)], control_lqr!)
@@ -150,11 +166,11 @@ function dlqr(A,B,Q,R,N)
 end
 
 function dlqr(A,Bu,Bλ,G,Q,R,N)
-    infflag = false
-    if N == Inf
-        infflag = true
-        N = 1000
-    end
+    # infflag = false
+    # if N == Inf
+    #     infflag = true
+    #     N = 10000
+    # end
 
     mx = size(A)[2]
     mu = size(Bu)[2]
@@ -185,20 +201,24 @@ function dlqr(A,Bu,Bλ,G,Q,R,N)
         Abar = A-Bu*Kuk-Bλ*Kλk
         Pkp1 = Q + Kuk'*R*Kuk + Abar'*Pk*Abar
 
-        if infflag && norm(Pk-Pkp1) < 1e-5
+        if norm(Pk-Pkp1) < 1e-5
             break
         end
 
         Pk = Pkp1
     end
 
-    if infflag
-        if k==1
-            @info "Riccati recursion did not converge."
-        else
-            Ku = [Ku[k]]
-        end
+    for k2=k-1:-1:1
+        Ku[k2] = Ku[k2+1]
     end
+
+    # if infflag
+    #     if k==1
+    #         @info "Riccati recursion did not converge."
+    #     else
+    #         Ku = [Ku[k]]
+    #     end
+    # end
 
     return Ku
 end
