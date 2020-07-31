@@ -15,6 +15,33 @@ mutable struct LQR{T,N,NK} <: Controller
     control!::Function
 
 
+    function LQR(A, Bu, Bλ, G, Q, R, horizon, eqcids, xd, vd, qd, ωd, Fτd, Δt, ::Type{T}) where {T}
+        Q = cat(Q...,dims=(1,2))
+        R = cat(R...,dims=(1,2))
+
+        N = horizon/Δt
+        if N<Inf
+            N = Integer(ceil(horizon/Δt))
+            Ntemp = N
+        else
+            Ntemp = Integer(ceil(10/Δt)) # 10 second time horizon as maximal horizon for convergence for Inf
+        end
+
+        # calculate K
+        if size(G)[1] == 0
+            @assert size(Bλ)[2] ==0
+            Ku = dlqr(A, Bu, Q, R, N) # can be calculated directly
+        else
+            Ku = dlqr(A, Bu, Bλ, G, Q, R, Ntemp)
+            if N == Inf
+                Ku[1] != Ku[2] && @info "Riccati recursion did not converge."
+                Ku = [Ku[1]]
+            end
+        end
+        
+        new{T, N, size(Ku[1][1])[2]}(Ku, xd, vd, qd, ωd, eqcids, Fτd, control_lqr!)
+    end
+
     function LQR(mechanism::Mechanism{T,Nn,Nb}, bodyids::AbstractVector{<:Integer}, eqcids::AbstractVector{<:Integer},
             Q::Vector{<:AbstractMatrix{T}}, R::Vector{<:AbstractMatrix{T}}, horizon;
             xd::Vector{<:AbstractVector{T}} = [SA{T}[0; 0; 0] for i=1:Nb], 
@@ -27,36 +54,10 @@ mutable struct LQR{T,N,NK} <: Controller
         @assert length(bodyids) == length(Q) == length(xd) == length(vd) == length(qd) == length(ωd) == Nb "Missmatched length for bodies"
         @assert length(eqcids) == length(R) == length(Fτd) "Missmatched length for constraints"
 
-        Δt = mechanism.Δt
-        
-        N = horizon/Δt
-        if N<Inf
-            N = Integer(ceil(horizon/Δt))
-            Ntemp = N
-        else
-            Ntemp = Integer(ceil(10/Δt)) # 10 second time horizon as maximal horizon for convergence for Inf
-        end
-
         # linearize        
         A, Bu, Bλ, G = linearsystem(mechanism, xd, vd, qd, ωd, Fτd, bodyids, eqcids)
 
-        Q = cat(Q...,dims=(1,2))
-        R = cat(R...,dims=(1,2))
-
-        # calculate K
-        if size(G)[1] == 0
-            @assert size(Bλ)[2] ==0
-            Ku = dlqr(A, Bu, Q, R, N) # can be calculated directly
-        else
-            Ku = dlqr(A, Bu, Bλ, G, Q, R, Ntemp)
-            if Ku[1] != Ku[2]
-                @info "Riccati recursion did not converge."
-            else
-                Ku = [Ku[1]]
-            end
-        end
-        
-        new{T, N, size(Ku[1][1])[2]}(Ku, xd, vd, qd, ωd, eqcids, Fτd, control_lqr!)
+        LQR(A, Bu, Bλ, G, Q, R, horizon, eqcids, xd, vd, qd, ωd, Fτd, mechanism.Δt, T)
     end
 
     function LQR(mechanism::Mechanism{T,Nn,Nb}, controlledids::AbstractVector{<:Integer}, controlids::AbstractVector{<:Integer},
@@ -69,16 +70,6 @@ mutable struct LQR{T,N,NK} <: Controller
     @assert length(controlledids) == length(Q) == length(xθd) == length(vωd) == Nb "Missmatched length for bodies"
     @assert length(controlids) == length(R) == length(Fτd) "Missmatched length for constraints"
 
-    Δt = mechanism.Δt
-    
-    N = horizon/Δt
-    if N<Inf
-        N = Integer(ceil(horizon/Δt))
-        Ntemp = N
-    else
-        Ntemp = Integer(ceil(10/Δt)) # 10 second time horizon as maximal horizon for convergence for Inf
-    end
-
     # linearize        
     A, Bu, Bλ, G, xd, vd, qd, ωd = linearsystem(mechanism, xθd, vωd, Fτd, controlledids, controlids)
 
@@ -87,20 +78,7 @@ mutable struct LQR{T,N,NK} <: Controller
     Q = cat(Q...,dims=(1,2))
     R = cat(R...,dims=(1,2))
 
-    # calculate K
-    if size(G)[1] == 0
-        @assert size(Bλ)[2] ==0
-        Ku = dlqr(A, Bu, Q, R, N) # can be calculated directly
-    else
-        Ku = dlqr(A, Bu, Bλ, G, Q, R, Ntemp)
-        if Ku[1] != Ku[2]
-            @info "Riccati recursion did not converge."
-        else
-            Ku = [Ku[1]]
-        end
-    end
-    
-    new{T, N, size(Ku[1][1])[2]}(Ku, xd, vd, qd, ωd, controlids, [[Fτd[i]] for i=1:length(Fτd)], control_lqr!)
+    LQR(A, Bu, Bλ, G, Q, R, horizon, controlids, xd, vd, qd, ωd, Fτd, mechanism.Δt, T)
 end
 end
 
@@ -166,12 +144,6 @@ function dlqr(A,B,Q,R,N)
 end
 
 function dlqr(A,Bu,Bλ,G,Q,R,N)
-    # infflag = false
-    # if N == Inf
-    #     infflag = true
-    #     N = 10000
-    # end
-
     mx = size(A)[2]
     mu = size(Bu)[2]
     mλ = size(Bλ)[2]
@@ -211,14 +183,6 @@ function dlqr(A,Bu,Bλ,G,Q,R,N)
     for k2=k-1:-1:1
         Ku[k2] = Ku[k2+1]
     end
-
-    # if infflag
-    #     if k==1
-    #         @info "Riccati recursion did not converge."
-    #     else
-    #         Ku = [Ku[k]]
-    #     end
-    # end
 
     return Ku
 end
