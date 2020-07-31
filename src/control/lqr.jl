@@ -90,6 +90,7 @@ end
 
 function control_lqr!(mechanism::Mechanism{T,Nn,Nb}, lqr::LQR{T,N}, k) where {T,Nn,Nb,N}
     Δz = zeros(T,Nb*12)
+    qvm = QuatVecMap()
     for (id,body) in pairs(mechanism.bodies)
         colx = (id-1)*12+1:(id-1)*12+3
         colv = (id-1)*12+4:(id-1)*12+6
@@ -99,7 +100,8 @@ function control_lqr!(mechanism::Mechanism{T,Nn,Nb}, lqr::LQR{T,N}, k) where {T,
         state = body.state
         Δz[colx] = state.xsol[2]-lqr.xd[id]
         Δz[colv] = state.vsol[2]-lqr.vd[id]
-        Δz[colq] = ConstrainedDynamics.VLᵀmat(lqr.qd[id]) * Rotations.params(state.qsol[2])
+        # Δz[colq] = ConstrainedDynamics.VLᵀmat(lqr.qd[id]) * Rotations.params(state.qsol[2])
+        Δz[colq] = rotation_error(state.qsol[2],lqr.qd[id],qvm)
         Δz[colω] = state.ωsol[2]-lqr.ωd[id]
     end
 
@@ -115,6 +117,7 @@ end
 
 function control_lqr!(mechanism::Mechanism{T,Nn,Nb}, lqr::LQR{T,Inf}, k) where {T,Nn,Nb}
     Δz = zeros(T,Nb*12)
+    qvm = QuatVecMap()
     for (id,body) in pairs(mechanism.bodies)
         colx = (id-1)*12+1:(id-1)*12+3
         colv = (id-1)*12+4:(id-1)*12+6
@@ -124,7 +127,7 @@ function control_lqr!(mechanism::Mechanism{T,Nn,Nb}, lqr::LQR{T,Inf}, k) where {
         state = body.state
         Δz[colx] = state.xsol[2]-lqr.xd[id]
         Δz[colv] = state.vsol[2]-lqr.vd[id]
-        Δz[colq] = ConstrainedDynamics.VLᵀmat(lqr.qd[id]) * Rotations.params(state.qsol[2])
+        Δz[colq] = rotation_error(state.qsol[2],lqr.qd[id],qvm)
         Δz[colω] = state.ωsol[2]-lqr.ωd[id]
     end
 
