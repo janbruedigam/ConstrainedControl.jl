@@ -5,6 +5,7 @@ using ConstrainedDynamics: svcat, szeros
 using LinearAlgebra
 using StaticArrays
 using Rotations
+using Rotations: rotation_error
 
 export PID,
     LQR,
