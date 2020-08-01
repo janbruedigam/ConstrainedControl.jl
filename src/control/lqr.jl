@@ -76,7 +76,7 @@ mutable struct LQR{T,N,NK} <: Controller
     Q = [diagm(ones(12))*Q[i] for i=1:length(Q)]
     R = [diagm(ones(1))*R[i] for i=1:length(R)]
 
-    LQR(A, Bu, Bλ, G, Q, R, horizon, controlids, xd, vd, qd, ωd, Fτd, mechanism.Δt, T)
+    LQR(A, Bu, Bλ, G, Q, R, horizon, controlids, xd, vd, qd, ωd, [[Fτd[i]] for i=1:length(Fτd)], mechanism.Δt, T)
 end
 end
 
