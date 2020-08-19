@@ -37,34 +37,36 @@ shapes = [box1]
 
 
 mech = Mechanism(origin, links, constraints, shapes = shapes, g=0)
-setPosition!(origin,link1,p2 = p2,Δq = UnitQuaternion(RotX(0-pi/4)))
-setPosition!(origin,link2,p2 = p2,Δq = UnitQuaternion(RotX(pi/4)))
-setPosition!(link1,link3,p1=-p2,p2 = p2,Δq = UnitQuaternion(RotX(pi/2)))
-setPosition!(link2,link4,p1=-p2,p2 = p2,Δq = UnitQuaternion(RotX(-pi/2)))
+setPosition!(origin,link1,p2 = p2,Δq = UnitQuaternion(RotX(0-pi/4+0.0)))
+setPosition!(origin,link2,p2 = p2,Δq = UnitQuaternion(RotX(pi/4-0.0)))
+setPosition!(link1,link3,p1=-p2,p2 = p2,Δq = UnitQuaternion(RotX(pi/2-0)))
+setPosition!(link2,link4,p1=-p2,p2 = p2,Δq = UnitQuaternion(RotX(-pi/2+0)))
 
 xd = [links[i].state.xc for i=1:4]
 qd=[links[i].state.qc for i=1:4]
 
-setPosition!(origin,link1,p2 = p2,Δq = UnitQuaternion(RotX(0-pi/4+0.4)))
-setPosition!(origin,link2,p2 = p2,Δq = UnitQuaternion(RotX(pi/4-0.4)))
-setPosition!(link1,link3,p1=-p2,p2 = p2,Δq = UnitQuaternion(RotX(pi/2-0.8)))
-setPosition!(link2,link4,p1=-p2,p2 = p2,Δq = UnitQuaternion(RotX(-pi/2+0.8)))
+ang = 1.0
+setPosition!(origin,link1,p2 = p2,Δq = UnitQuaternion(RotX(0-pi/4+ang)))
+setPosition!(origin,link2,p2 = p2,Δq = UnitQuaternion(RotX(pi/4-ang)))
+setPosition!(link1,link3,p1=-p2,p2 = p2,Δq = UnitQuaternion(RotX(pi/2-2*ang)))
+setPosition!(link2,link4,p1=-p2,p2 = p2,Δq = UnitQuaternion(RotX(-pi/2+2*ang)))
 
 Q = [diagm(ones(12))*0.0 for i=1:4]
 Q[1][7,7]=1.0
-Q[1][10,10]=1.0
+# Q[1][10,10]=1.0
 Q[2][7,7]=1.0
-Q[2][10,10]=1.0
+# Q[2][10,10]=1.0
 # Q[3][7,7]=1.0
 # Q[3][10,10]=1.0
 # Q[4][7,7]=1.0
 # Q[4][10,10]=1.0
 R = [ones(1,1) for i=1:2]
 
-lqr = LQR(mech, getid.(links), [getid(constraints[1]);getid(constraints[2])], Q, R, 10., xd=xd, qd=qd)
+lqr = LQR(mech, getid.(links), [getid(constraints[1]);getid(constraints[2])], Q, R, Inf, xd=xd, qd=qd)
 A, Bu, Bλ, G = linearsystem(mech, xd, [zeros(3) for i=1:4], qd, [zeros(3) for i=1:4], [[0] for i=1:2], getid.(links), [getid(constraints[1]);getid(constraints[2])])
 
 steps = Base.OneTo(1000)
 storage = Storage{Float64}(steps,4)
 storage = simulate!(mech,storage,lqr,record = true)
+# storage = simulate!(mech,storage,record = true)
 visualize(mech,storage,shapes)
