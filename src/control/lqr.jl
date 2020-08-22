@@ -92,7 +92,6 @@ function control_lqr!(mechanism::Mechanism{T,Nn,Nb}, lqr::LQR{T,N}, k) where {T,
         state = body.state
         Δz[colx] = state.xsol[2]-lqr.xd[id]
         Δz[colv] = state.vsol[2]-lqr.vd[id]
-        # Δz[colq] = ConstrainedDynamics.VLᵀmat(lqr.qd[id]) * Rotations.params(state.qsol[2])
         Δz[colq] = rotation_error(state.qsol[2],lqr.qd[id],qvm)
         Δz[colω] = state.ωsol[2]-lqr.ωd[id]
     end
