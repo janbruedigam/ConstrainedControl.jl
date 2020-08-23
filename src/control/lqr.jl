@@ -67,17 +67,17 @@ mutable struct LQR{T,N,NK} <: Controller
         Fτd::AbstractVector{T} = szeros(T,length(controlids))
     ) where {T, Nn, Nb}
 
-    @assert length(controlledids) == length(Q) == length(xθd) == length(vωd) == Nb "Missmatched length for bodies"
-    @assert length(controlids) == length(R) == length(Fτd) "Missmatched length for constraints"
+        @assert length(controlledids) == length(Q) == length(xθd) == length(vωd) == Nb "Missmatched length for bodies"
+        @assert length(controlids) == length(R) == length(Fτd) "Missmatched length for constraints"
 
-    # linearize        
-    A, Bu, Bλ, G, xd, vd, qd, ωd = linearsystem(mechanism, xθd, vωd, Fτd, controlledids, controlids)
+        # linearize        
+        A, Bu, Bλ, G, xd, vd, qd, ωd = linearsystem(mechanism, xθd, vωd, Fτd, controlledids, controlids)
 
-    Q = [diagm(ones(12))*Q[i] for i=1:length(Q)]
-    R = [diagm(ones(1))*R[i] for i=1:length(R)]
+        Q = [diagm(ones(12))*Q[i] for i=1:length(Q)]
+        R = [diagm(ones(1))*R[i] for i=1:length(R)]
 
-    LQR(A, Bu, Bλ, G, Q, R, horizon, controlids, xd, vd, qd, ωd, [[Fτd[i]] for i=1:length(Fτd)], mechanism.Δt, T)
-end
+        LQR(A, Bu, Bλ, G, Q, R, horizon, controlids, xd, vd, qd, ωd, [[Fτd[i]] for i=1:length(Fτd)], mechanism.Δt, T)
+    end
 end
 
 function control_lqr!(mechanism::Mechanism{T,Nn,Nb}, lqr::LQR{T,N}, k) where {T,Nn,Nb,N}

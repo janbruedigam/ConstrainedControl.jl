@@ -37,36 +37,23 @@ constraints = [joint1;joint2;joint3;joint4]
 shapes = [cartshape;poleshape]
 
 
-mech = Mechanism(origin, links, constraints, shapes = shapes, g=-9.81,Δt = dt/10)
+mech = Mechanism(origin, links, constraints, shapes = shapes, g=-9.81,Δt = 0.01)
 setPosition!(origin,cart,Δx = [0;0.0;0])
-setPosition!(cart,pole1,p2 = -p2,Δq = UnitQuaternion(RotX(ϕ+pi)))
+setPosition!(cart,pole1,p2 = -p2,Δq = UnitQuaternion(RotX(ϕ+pi+0.)))
 setPosition!(pole1,pole2,p1 = p2,p2 = -p2,Δq = UnitQuaternion(RotX(0.)))
-setPosition!(pole2,pole3,p1 = p2,p2 = -p2,Δq = UnitQuaternion(RotX(0.)))
+setPosition!(pole2,pole3,p1 = p2,p2 = -p2,Δq = UnitQuaternion(RotX(-0.)))
+
+Q = [diagm(ones(12))*1.0 for i=1:4]
+R = [ones(1,1)*0.1]
+
+lqr = TrackingLQR(mech, storage0red, [[Ured[k]] for k=1:1000], [5], Q, R)
 
 function control!(mechanism, k)
-    setForce!(mechanism, geteqconstraint(mechanism,5), U[k])
+    setForce!(mechanism, geteqconstraint(mechanism,5), Ured[k])
 end
-
-steps = Base.OneTo(10000)
-storage0 = Storage{Float64}(steps,4)
-
-simulate!(mech,storage0,control!,record = true)
-visualize(mech,storage0,shapes)
 
 steps = Base.OneTo(1000)
-storage0red = Storage{Float64}(steps,4)
-Ured = [SA_F64[0] for i=1:1000]
+storage = Storage{Float64}(steps,4)
 
-
-for n=1:4
-    for k=1:1000
-        storage0red.x[n][k] = storage0.x[n][10*k]
-        storage0red.v[n][k] = storage0.v[n][10*k]
-        storage0red.q[n][k] = storage0.q[n][10*k]
-        storage0red.ω[n][k] = storage0.ω[n][10*k]
-    end
-end
-
-for k=1:1000
-    Ured[k] = U[10*k]
-end
+simulate!(mech,storage,control!,record = true)
+visualize(mech,storage,shapes)

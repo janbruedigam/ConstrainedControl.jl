@@ -109,9 +109,9 @@ obj = LQRObjective(Q,R,Qf,xf,N)
 conSet = ConstraintList(n,m,N)
 
 # Control Bounds
-u_bnd = 100.0
-bnd = BoundConstraint(n,m, u_min=-u_bnd, u_max=u_bnd)
-add_constraint!(conSet, bnd, 1:N-1)
+# u_bnd = 100.0
+# bnd = BoundConstraint(n,m, u_min=-u_bnd, u_max=u_bnd)
+# add_constraint!(conSet, bnd, 1:N-1)
 
 # Goal Constraint
 goal = GoalConstraint(xf)
@@ -119,18 +119,21 @@ add_constraint!(conSet, goal, N)
 
 prob = Problem(model, obj, xf, tf, x0=x0, constraints=conSet)
 
-u0 = @SVector fill(rand(),m)
-U0 = [u0 for k = 1:N-1]
+u0 = @SVector fill(0.01,m)
+# U0 = [u0 for k = 1:N-1]
+U0 = [U[Int(floor((k-1)*10+1))] for k = 1:1000]
 initial_controls!(prob, U0)
 rollout!(prob)
 
 using Altro
 opts = SolverOptions(
-    cost_tolerance_intermediate=1e-2,
+    constraint_tolerance = 1e-15,
+    cost_tolerance = 1e-3,
+    cost_tolerance_intermediate=1e-1,
     penalty_scaling=10.,
-    penalty_initial=1.0
+    penalty_initial=10000.0
 )
-
+ 
 altro = ALTROSolver(prob, opts)
 solve!(altro)
 
