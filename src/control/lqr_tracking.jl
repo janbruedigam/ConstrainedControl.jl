@@ -18,8 +18,8 @@ mutable struct TrackingLQR{T,N,NK} <: Controller
             Q::Vector{<:AbstractMatrix{T}}, R::Vector{<:AbstractMatrix{T}}
         ) where {T, Nn, Nb, N}
 
-        Q = cat(Q...,dims=(1,2))
-        R = cat(R...,dims=(1,2))
+        Q = cat(Q...,dims=(1,2))*mechanism.Δt
+        R = cat(R...,dims=(1,2))*mechanism.Δt
 
         xd = [[SA{T}[0; 0; 0] for i=1:Nb] for j=1:N]
         vd = [[SA{T}[0; 0; 0] for i=1:Nb] for j=1:N]

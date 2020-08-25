@@ -16,8 +16,8 @@ mutable struct LQR{T,N,NK} <: Controller
 
 
     function LQR(A, Bu, Bλ, G, Q, R, horizon, eqcids, xd, vd, qd, ωd, Fτd, Δt, ::Type{T}) where {T}
-        Q = cat(Q...,dims=(1,2))
-        R = cat(R...,dims=(1,2))
+        Q = cat(Q...,dims=(1,2))*Δt
+        R = cat(R...,dims=(1,2))*Δt
 
         N = horizon/Δt
         if N<Inf
