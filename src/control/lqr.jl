@@ -15,7 +15,7 @@ mutable struct LQR{T,N,NK} <: Controller
     control!::Function
 
 
-    function LQR(A, Bu, Bλ, G, Q, R, horizon, eqcids, xd, vd, qd, ωd, Fτd, Δt, ::Type{T}) where {T}
+    function LQR(A, Bu, Bλ, G, Q, R, horizon, eqcids, xd, vd, qd, ωd, Fτd, Δt, ::Type{T}; controlfunction::Function = control_lqr!) where {T}
         Q = cat(Q...,dims=(1,2))*Δt
         R = cat(R...,dims=(1,2))*Δt
 
@@ -39,7 +39,7 @@ mutable struct LQR{T,N,NK} <: Controller
             end
         end
         
-        new{T, N, size(Ku[1][1])[2]}(Ku, xd, vd, qd, ωd, eqcids, Fτd, control_lqr!)
+        new{T, N, size(Ku[1][1])[2]}(Ku, xd, vd, qd, ωd, eqcids, Fτd, controlfunction)
     end
 
     function LQR(mechanism::Mechanism{T,Nn,Nb}, bodyids::AbstractVector{<:Integer}, eqcids::AbstractVector{<:Integer},
@@ -48,7 +48,8 @@ mutable struct LQR{T,N,NK} <: Controller
             vd::Vector{<:AbstractVector{T}} = [SA{T}[0; 0; 0] for i=1:Nb],
             qd::Vector{UnitQuaternion{T}} = [one(UnitQuaternion{T}) for i=1:Nb], 
             ωd::Vector{<:AbstractVector{T}} = [SA{T}[0; 0; 0] for i=1:Nb],
-            Fτd::Vector{<:AbstractVector{T}} = [SA{T}[0] for i=1:length(eqcids)]
+            Fτd::Vector{<:AbstractVector{T}} = [SA{T}[0] for i=1:length(eqcids)],
+            controlfunction::Function = control_lqr!
         ) where {T, Nn, Nb}
 
         @assert length(bodyids) == length(Q) == length(xd) == length(vd) == length(qd) == length(ωd) == Nb "Missmatched length for bodies"
@@ -57,14 +58,15 @@ mutable struct LQR{T,N,NK} <: Controller
         # linearize        
         A, Bu, Bλ, G = linearsystem(mechanism, xd, vd, qd, ωd, Fτd, bodyids, eqcids)
 
-        LQR(A, Bu, Bλ, G, Q, R, horizon, eqcids, xd, vd, qd, ωd, Fτd, mechanism.Δt, T)
+        LQR(A, Bu, Bλ, G, Q, R, horizon, eqcids, xd, vd, qd, ωd, Fτd, mechanism.Δt, T, controlfunction)
     end
 
     function LQR(mechanism::Mechanism{T,Nn,Nb}, controlledids::AbstractVector{<:Integer}, controlids::AbstractVector{<:Integer},
         Q::AbstractVector{T}, R::AbstractVector{T}, horizon;
         xθd::AbstractVector{T} = szeros(T,length(controlledids)), 
         vωd::AbstractVector{T} = szeros(T,length(controlledids)),
-        Fτd::AbstractVector{T} = szeros(T,length(controlids))
+        Fτd::AbstractVector{T} = szeros(T,length(controlids)),
+        controlfunction::Function = control_lqr!
     ) where {T, Nn, Nb}
 
         @assert length(controlledids) == length(Q) == length(xθd) == length(vωd) == Nb "Missmatched length for bodies"
@@ -76,7 +78,7 @@ mutable struct LQR{T,N,NK} <: Controller
         Q = [diagm(ones(12))*Q[i] for i=1:length(Q)]
         R = [diagm(ones(1))*R[i] for i=1:length(R)]
 
-        LQR(A, Bu, Bλ, G, Q, R, horizon, controlids, xd, vd, qd, ωd, [[Fτd[i]] for i=1:length(Fτd)], mechanism.Δt, T)
+        LQR(A, Bu, Bλ, G, Q, R, horizon, controlids, xd, vd, qd, ωd, [[Fτd[i]] for i=1:length(Fτd)], mechanism.Δt, T, controlfunction)
     end
 end
 

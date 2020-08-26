@@ -15,7 +15,8 @@ mutable struct TrackingLQR{T,N,NK} <: Controller
 
 
     function TrackingLQR(mechanism::Mechanism{T,Nn,Nb}, storage::Storage{T,N}, Fτ::Vector{<:Vector{<:AbstractVector{T}}}, eqcids::AbstractVector{<:Integer},
-            Q::Vector{<:AbstractMatrix{T}}, R::Vector{<:AbstractMatrix{T}}
+            Q::Vector{<:AbstractMatrix{T}}, R::Vector{<:AbstractMatrix{T}};
+            controlfunction::Function = control_trackinglqr!
         ) where {T, Nn, Nb, N}
 
         Q = cat(Q...,dims=(1,2))*mechanism.Δt
@@ -38,7 +39,7 @@ mutable struct TrackingLQR{T,N,NK} <: Controller
         # calculate K
         Ku = dlqr(mechanism, xd, vd, qd, ωd, Fτ, eqcids,Q,R,N)
 
-        new{T, N, size(Ku[1][1])[2]}(Ku, xd, vd, qd, ωd, eqcids, Fτ, control_trackinglqr!)
+        new{T, N, size(Ku[1][1])[2]}(Ku, xd, vd, qd, ωd, eqcids, Fτ, controlfunction)
     end
 end
 

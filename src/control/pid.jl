@@ -13,17 +13,18 @@ mutable struct PID{T,N} <: Controller
     control!::Function
 
 
-    function PID(mechanism, eqcid::Int64, goal::T; P::T = zero(T), I::T = zero(T), D::T = zero(T)) where T
+    function PID(mechanism, eqcid::Int64, goal::T; P::T = zero(T), I::T = zero(T), D::T = zero(T), controlfunction::Function = control_pid!) where T
         eqc = geteqconstraint(mechanism, eqcid)
         Nb = 6 * length(unique(eqc.childids))
         Nc = ConstrainedDynamics.length(eqc)
         @assert Nb-Nc == 1 "Only 1 DOF joints are supported"
         
-        new{T,1}([P], [I], [D], [eqcid], [goal], [0], [0], control_pid!)
+        new{T,1}([P], [I], [D], [eqcid], [goal], [0], [0], controlfunction)
     end
 
     function PID(mechanism, eqcids::AbstractVector{Int64}, goals::AVec; 
-            P::AVec = zeros(T,length(eqcids)), I::AVec = zeros(T,length(eqcids)), D::AVec = zeros(T,length(eqcids))
+            P::AVec = zeros(T,length(eqcids)), I::AVec = zeros(T,length(eqcids)), D::AVec = zeros(T,length(eqcids)),
+            controlfunction::Function = control_pid!
         ) where {T, AVec<:AbstractVector{T}}
 
         N = length(eqcids)
@@ -34,7 +35,7 @@ mutable struct PID{T,N} <: Controller
             Nc = ConstrainedDynamics.length(eqc)
             @assert Nb-Nc == 1 "Only 1 DOF joints are supported"
         end
-        new{T,N}(P, I, D, eqcids, goals, zeros(T,N), zeros(T,N), control_pid!)
+        new{T,N}(P, I, D, eqcids, goals, zeros(T,N), zeros(T,N), controlfunction)
     end
 end
 
