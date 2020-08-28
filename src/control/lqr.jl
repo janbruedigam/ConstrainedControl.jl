@@ -58,7 +58,7 @@ mutable struct LQR{T,N,NK} <: Controller
         # linearize        
         A, Bu, Bλ, G = linearsystem(mechanism, xd, vd, qd, ωd, Fτd, bodyids, eqcids)
 
-        LQR(A, Bu, Bλ, G, Q, R, horizon, eqcids, xd, vd, qd, ωd, Fτd, mechanism.Δt, T, controlfunction)
+        LQR(A, Bu, Bλ, G, Q, R, horizon, eqcids, xd, vd, qd, ωd, Fτd, mechanism.Δt, T, controlfunction = controlfunction)
     end
 
     function LQR(mechanism::Mechanism{T,Nn,Nb}, controlledids::AbstractVector{<:Integer}, controlids::AbstractVector{<:Integer},
@@ -78,7 +78,7 @@ mutable struct LQR{T,N,NK} <: Controller
         Q = [diagm(ones(12))*Q[i] for i=1:length(Q)]
         R = [diagm(ones(1))*R[i] for i=1:length(R)]
 
-        LQR(A, Bu, Bλ, G, Q, R, horizon, controlids, xd, vd, qd, ωd, [[Fτd[i]] for i=1:length(Fτd)], mechanism.Δt, T, controlfunction)
+        LQR(A, Bu, Bλ, G, Q, R, horizon, controlids, xd, vd, qd, ωd, [[Fτd[i]] for i=1:length(Fτd)], mechanism.Δt, T, controlfunction = controlfunction)
     end
 end
 
