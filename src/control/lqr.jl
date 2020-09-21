@@ -1,5 +1,4 @@
 # TODO
-# Only for constant reference trajectories
 # Only for 1dof joints
 mutable struct LQR{T,N,NK} <: Controller
     K::Vector{Vector{SMatrix{1,NK,T,NK}}} # for each time step and each eqc
@@ -30,7 +29,12 @@ mutable struct LQR{T,N,NK} <: Controller
         # calculate K
         if size(G)[1] == 0
             @assert size(Bλ)[2] ==0
-            Ku = dlqr(A, Bu, Q, R, N) # can be calculated directly
+            if N==Inf
+                K = dlqr(A, Bu, Q, R, N)
+                Ku = [[K[i:i,:] for i=1:size(K)[1]]]
+            else
+                Ku = dlqr(A,Bu,zeros(size(A)[1],0),zeros(0,size(A)[1]),Q,R,N)
+            end
         else
             Ku = dlqr(A, Bu, Bλ, G, Q, R, Ntemp)
             if N == Inf
@@ -130,16 +134,6 @@ function control_lqr!(mechanism::Mechanism{T,Nn,Nb}, lqr::LQR{T,Inf}, k) where {
     end
 
     return
-end
-
-function dlqr(A,B,Q,R,N)
-    if N==Inf
-        P = dare(A,B,Q,R)
-        K = (R+B'*P*B)\B'*P*A
-        return [[K[i:i,:] for i=1:size(K)[1]]]
-    else
-        return dlqr(A,B,zeros(size(A)[1],0),zeros(0,size(A)[1]),Q,R,N)
-    end
 end
 
 function dlqr(A,Bu,Bλ,G,Q,R,N)

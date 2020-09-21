@@ -3,7 +3,6 @@ using ConstrainedDynamicsVis
 using ConstrainedControl
 using LinearAlgebra
 using Rotations
-using Plots
 
 
 # Parameters
@@ -143,7 +142,7 @@ for i = 1:nc
 end
 ### End
 
-i = 750
+i = 97
 setPosition!(origin,lowerlegl,p2 = -pll,Δq = UnitQuaternion(RotX(anglesl[i][1])))
 setPosition!(origin,lowerlegr,p2 = -pll,Δq = UnitQuaternion(RotX(anglesr[i][1])))
 setPosition!(lowerlegl,upperlegl,p1 = pll, p2 = -pul,Δq = UnitQuaternion(RotX(anglesl[i][2])))
