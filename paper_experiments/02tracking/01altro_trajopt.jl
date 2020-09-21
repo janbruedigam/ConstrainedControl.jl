@@ -120,8 +120,8 @@ add_constraint!(conSet, goal, N)
 prob = Problem(model, obj, xf, tf, x0=x0, constraints=conSet)
 
 u0 = @SVector fill(0.01,m)
-# U0 = [u0 for k = 1:N-1]
-U0 = [U[Int(floor((k-1)*10+1))] for k = 1:1000]
+U0 = [u0 for k = 1:N-1]
+# U0 = [U[Int(floor((k-1)*10+1))] for k = 1:1000]
 initial_controls!(prob, U0)
 rollout!(prob)
 
