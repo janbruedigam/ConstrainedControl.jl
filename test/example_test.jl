@@ -10,6 +10,7 @@ files = [
     "lqr_sawyer"
     "pid_doublependulum"
     "pid_pendulum"
+    "trackingLQR_triple_cartpole"
 ]
 
 for file in files
