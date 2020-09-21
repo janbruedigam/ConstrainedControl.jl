@@ -4,6 +4,7 @@ using ConstrainedControl
 using LinearAlgebra
 using Rotations
 using Rotations: rotation_error
+using Statistics
 
 
 # Parameters
@@ -100,85 +101,85 @@ end
 
 lqr = TrackingLQR(mech, storage0, [[[U[k]]] for k=1:1000], [5], Q, R, controlfunction = owncontrol_trackinglqr!)
 
-function uncontrol!(mechanism, k)
-    v1 = mechanism.bodies[1].state.vc[2]
-    ω2 = mechanism.bodies[2].state.ωc[1]
-    ω3 = mechanism.bodies[3].state.ωc[1] - ω2
-    ω4 = mechanism.bodies[4].state.ωc[1] - ω2 - ω3
+# function uncontrol!(mechanism, k)
+#     v1 = mechanism.bodies[1].state.vc[2]
+#     ω2 = mechanism.bodies[2].state.ωc[1]
+#     ω3 = mechanism.bodies[3].state.ωc[1] - ω2
+#     ω4 = mechanism.bodies[4].state.ωc[1] - ω2 - ω3
 
-    ucart = U[k] - sign(v1)*0.1*abs(v1) + randn()*2
-    up2 = -sign(ω2)*0.1*abs(ω2)
-    up3 = -sign(ω3)*0.1*abs(ω3)
-    up4 = -sign(ω4)*0.1*abs(ω4)
+#     ucart = U[k] - sign(v1)*0.1*abs(v1) + randn()*2
+#     up2 = -sign(ω2)*0.1*abs(ω2)
+#     up3 = -sign(ω3)*0.1*abs(ω3)
+#     up4 = -sign(ω4)*0.1*abs(ω4)
 
-    setForce!(mechanism, geteqconstraint(mechanism,5), [ucart])
-    setForce!(mechanism, geteqconstraint(mechanism,6), [up2])
-    setForce!(mechanism, geteqconstraint(mechanism,7), [up3])
-    setForce!(mechanism, geteqconstraint(mechanism,8), [up4])
-end
+#     setForce!(mechanism, geteqconstraint(mechanism,5), [ucart])
+#     setForce!(mechanism, geteqconstraint(mechanism,6), [up2])
+#     setForce!(mechanism, geteqconstraint(mechanism,7), [up3])
+#     setForce!(mechanism, geteqconstraint(mechanism,8), [up4])
+# end
 
-function control!(mechanism, k)
-    mincoords = [minimalCoordinates(mechanism)[5][1];minimalCoordinates(mechanism)[6][1];minimalCoordinates(mechanism)[7][1];minimalCoordinates(mechanism)[8][1]]
+# function control!(mechanism, k)
+#     mincoords = [minimalCoordinates(mechanism)[5][1];minimalCoordinates(mechanism)[6][1];minimalCoordinates(mechanism)[7][1];minimalCoordinates(mechanism)[8][1]]
 
-    v1 = mechanism.bodies[1].state.vc[2]
-    ω2 = mechanism.bodies[2].state.ωc[1]
-    ω3 = mechanism.bodies[3].state.ωc[1] - ω2
-    ω4 = mechanism.bodies[4].state.ωc[1] - ω2 - ω3
-    vels = [v1;ω2;ω3;ω4]
+#     v1 = mechanism.bodies[1].state.vc[2]
+#     ω2 = mechanism.bodies[2].state.ωc[1]
+#     ω3 = mechanism.bodies[3].state.ωc[1] - ω2
+#     ω4 = mechanism.bodies[4].state.ωc[1] - ω2 - ω3
+#     vels = [v1;ω2;ω3;ω4]
 
     
-    c = [mincoords;vels]
-    if c[2]<0
-        c[2] += 2pi
-    end
-    if c[3]<0
-        c[3] += 2pi
-    end
-    if c[4]<0
-        c[4] += 2pi
-    end
-    if X[2,k]<0
-        X[2,k] += 2pi
-    end
-    if X[3,k]<0
-        X[3,k] += 2pi
-    end
-    if X[4,k]<0
-        X[4,k] += 2pi
-    end
+#     c = [mincoords;vels]
+#     if c[2]<0
+#         c[2] += 2pi
+#     end
+#     if c[3]<0
+#         c[3] += 2pi
+#     end
+#     if c[4]<0
+#         c[4] += 2pi
+#     end
+#     if X[2,k]<0
+#         X[2,k] += 2pi
+#     end
+#     if X[3,k]<0
+#         X[3,k] += 2pi
+#     end
+#     if X[4,k]<0
+#         X[4,k] += 2pi
+#     end
 
-    diffval = (c-X[:,k]) 
+#     diffval = (c-X[:,k]) 
 
-    if diffval[2] > pi
-        diffval[2] = 2pi - c[2] -X[2,k]
-    elseif diffval[2] < -pi
-        diffval[2] = c[2] - (2pi - X[2,k])
-    end
-    if diffval[3] > pi
-        diffval[3] = 2pi - c[3] -X[3,k]
-    elseif diffval[3] < -pi
-        diffval[3] = c[3] - (2pi - X[3,k])
-    end
-    if diffval[4] > pi
-        diffval[4] = 2pi - c[4] -X[4,k]
-    elseif diffval[4] < -pi
-        diffval[4] = c[4] - (2pi - X[4,k])
-    end
+#     if diffval[2] > pi
+#         diffval[2] = 2pi - c[2] -X[2,k]
+#     elseif diffval[2] < -pi
+#         diffval[2] = c[2] - (2pi - X[2,k])
+#     end
+#     if diffval[3] > pi
+#         diffval[3] = 2pi - c[3] -X[3,k]
+#     elseif diffval[3] < -pi
+#         diffval[3] = c[3] - (2pi - X[3,k])
+#     end
+#     if diffval[4] > pi
+#         diffval[4] = 2pi - c[4] -X[4,k]
+#     elseif diffval[4] < -pi
+#         diffval[4] = c[4] - (2pi - X[4,k])
+#     end
 
 
-    ucart = U[k]-K[k,:]'*diffval - sign(vels[1])*0.1*abs(vels[1]) + randn()*2
-    ucost[k] = ((K[k,:]'*diffval)'*R[1]*(K[k,:]'*diffval))[1]
-    up2 = -sign(vels[2])*0.1*abs(vels[2])
-    up3 = -sign(vels[3])*0.1*abs(vels[3])
-    up4 = -sign(vels[4])*0.1*abs(vels[4])
+#     ucart = U[k]-K[k,:]'*diffval - sign(vels[1])*0.1*abs(vels[1]) + randn()*2
+#     ucost[k] = ((K[k,:]'*diffval)'*R[1]*(K[k,:]'*diffval))[1]
+#     up2 = -sign(vels[2])*0.1*abs(vels[2])
+#     up3 = -sign(vels[3])*0.1*abs(vels[3])
+#     up4 = -sign(vels[4])*0.1*abs(vels[4])
 
-    setForce!(mechanism, geteqconstraint(mechanism,5), [ucart])
-    setForce!(mechanism, geteqconstraint(mechanism,6), [up2])
-    setForce!(mechanism, geteqconstraint(mechanism,7), [up3])
-    setForce!(mechanism, geteqconstraint(mechanism,8), [up4])
+#     setForce!(mechanism, geteqconstraint(mechanism,5), [ucart])
+#     setForce!(mechanism, geteqconstraint(mechanism,6), [up2])
+#     setForce!(mechanism, geteqconstraint(mechanism,7), [up3])
+#     setForce!(mechanism, geteqconstraint(mechanism,8), [up4])
 
-    return
-end
+#     return
+# end
 
 
 cart.m *= 1.1
@@ -215,8 +216,8 @@ for n=1:nmax
     setVelocity!(pole1)
     setVelocity!(pole2)
     setVelocity!(pole3)
-    # simulate!(mech,storage,lqr,record = true); sel = 1
-    simulate!(mech,storage,control!,record = true); sel = 2
+    simulate!(mech,storage,lqr,record = true); sel = 1
+    # simulate!(mech,storage,control!,record = true); sel = 2
     # simulate!(mech,storage,uncontrol!,record = true); sel = 3
 
     # visualize(mech,storage,shapes)
