@@ -2,6 +2,9 @@ using BenchmarkTools
 
 files = [
     "lqr_acrobot"
+    "lqr_cartpole_n_pendulum"
+    "lqr_cartpole"
+    "lqr_deltabot"
     "lqr_pendulum"
     "lqr_prismatic"
     "lqr_sawyer"
