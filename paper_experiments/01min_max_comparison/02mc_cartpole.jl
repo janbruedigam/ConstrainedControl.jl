@@ -10,12 +10,15 @@ using Plots
 ex = [1.0;0.0;0.0]
 ey = [0.0;1.0;0.0]
 
-length1 = 1.0
+l1 = 0.5
+l2 = 1.0
+m1 = l1
+m2 = l2
 width, depth = 0.1, 0.1
-cartshape = Box(0.1, 0.5, 0.1, length1/2)
-poleshape = Box(width, depth, length1, length1)
+cartshape = Box(0.1, l1, 0.1, l1)
+poleshape = Box(width, depth, l2, l2)
 
-p2 = [0.0;0.0;length1/2] # joint connection point
+p2 = [0.0;0.0;l2/2] # joint connection point
 
 # Desired orientation
 ϕ = pi
@@ -34,11 +37,11 @@ constraints = [joint1;joint2]
 shapes = [cartshape;poleshape]
 
 
-mech = Mechanism(origin, links, constraints, shapes = shapes, g=-9.81, Δt = 0.001)
+mech = Mechanism(origin, links, constraints, shapes = shapes, g=-9.81, Δt = 0.01)
 # setPosition!(origin,cart,Δx = [0;0.5;0])
 # setPosition!(cart,pole,p2 = p2,Δq = UnitQuaternion(RotX(ϕ+0.2)))
 
-xd = [[[0;0;0.0]];[[0;0;0.5]]]
+xd = [[[0;0;0.0]];[[0;0;l2/2]]]
 qd=[[UnitQuaternion(RotX(0.0))];[UnitQuaternion(RotX(ϕ))]]
 
 Q = [diagm(ones(12))*0.0 for i=1:2]
@@ -62,7 +65,7 @@ function contr!(mechanism::Mechanism{T,N,Nb}, k) where {T,N,Nb}
     # display(vels)
 
     
-    u = ([1.0*(mincoords[1])] + [-38.07*(mincoords[2]-pi)] + [2.4*vels[1]] + [-7.83*vels[2]])
+    u = ([1.0*(mincoords[1])] + [-38.09*(mincoords[2]-pi)] + [2.4*vels[1]] + [-7.85*vels[2]])
     setForce!(mechanism, geteqconstraint(mechanism, 3), u)
 
     return
@@ -70,8 +73,8 @@ end
 
 steps = Base.OneTo(25000)
 
-s1 = 101
-s2 = 101
+s1 = 11
+s2 = 11
 # storages = [Storage{Float64}(steps,2) for i=1:s1*s2]
 storage = Storage{Float64}(steps,2)
 successful = [false for i=1:s1*s2]
@@ -93,14 +96,14 @@ for i=1:s1
         joint2.λsol[1] *= 0
         joint2.λsol[2] *= 0
         try
-            # # simulate!(mech,storages[counter],lqr,record = true)
+            # simulate!(mech,storages[counter],lqr,record = true)
             # simulate!(mech,storages[counter],contr!,record = true, debug=false)
-            # simulate!(mech,steps,storage,lqr)
-            simulate!(mech,steps,storage,contr!)
+            simulate!(mech,steps,storage,lqr,record=true)
+            # simulate!(mech,steps,storage,contr!,record=true)
         catch
             display("Failed for "*string(i)*" and "*string(j))
         end
-        if norm(cart.state.xc)<1e-1 && norm(pole.state.xc - [0;0;0.5])<1e-1 && norm(cart.state.vc)<1e-1 && norm(pole.state.ωc)<1e-1
+        if !any(getindex.(storage.ω[1],1).>100*pi) && !any(getindex.(storage.ω[2],1).>100*pi) && norm([cart.state.xc;pole.state.xc;cart.state.vc;pole.state.vc] - [xd[1];xd[2];zeros(6)])<1e-1
             successful[counter] = true
         end
         counter += 1

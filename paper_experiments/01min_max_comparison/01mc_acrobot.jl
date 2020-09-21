@@ -8,13 +8,16 @@ using Plots
 # Parameters
 joint_axis = [1.0;0.0;0.0]
 
-length1 = 1.0
+l1 = 1.0
+l2 = 2.0
+m1 = 1.0
+m2 = 1.0
 width, depth = 0.1, 0.1
-box1 = Box(width, depth, length1, length1)
-box2 = Box(width, depth, length1*2, length1)
+box1 = Box(width, depth, l1, m1)
+box2 = Box(width, depth, l2, m2)
 
-p2a = [0.0;0.0;length1/2] # joint connection point
-p2b = [0.0;0.0;length1] # joint connection point
+p2a = [0.0;0.0;l1/2] # joint connection point
+p2b = [0.0;0.0;l2/2] # joint connection point
 
 # Desired orientation
 ϕ1 = pi
@@ -36,7 +39,7 @@ shapes = [box1;box2]
 
 mech = Mechanism(origin, links, constraints, shapes = shapes, g=-9.81, Δt = 0.001)
 
-xd = [[[0;0;0.5]];[[0;0;2.0]]]
+xd = [[[0;0;l1/2]];[[0;0;l1+l2/2]]]
 qd=[[UnitQuaternion(RotX(ϕ1))];[UnitQuaternion(RotX(ϕ2))]]
 
 Q = [diagm(ones(12))*0.0 for i=1:2]
@@ -56,8 +59,6 @@ function contr!(mechanism::Mechanism{T,N,Nb}, k) where {T,N,Nb}
         mincoords = (mincoords[1]+2pi,mincoords[2])
     end
     vels = [mechanism.bodies[1].state.ωc[1];mechanism.bodies[2].state.ωc[1]-mechanism.bodies[1].state.ωc[1]]
-    # display(mincoords)
-
     
     u = ([242.52*(mincoords[1]-pi)] + [96.33*mincoords[2]] + [104.59*vels[1]] + [49.05*vels[2]])
     setForce!(mechanism, geteqconstraint(mechanism, 4), u)
@@ -91,13 +92,13 @@ for i=1:s1
         joint2.λsol[2] *= 0
         try
             # simulate!(mech,storages[counter],lqr,record = true)
-            # # simulate!(mech,storages[counter],contr!,record = true)
-            # simulate!(mech,steps,storage,lqr)
-            simulate!(mech,steps,storage,contr!)
+            # simulate!(mech,storages[counter],contr!,record = true)
+            simulate!(mech,steps,storage,lqr,record = true)
+            # simulate!(mech,steps,storage,contr!)
         catch
             display("Failed for "*string(i)*" and "*string(j))
         end
-        if norm(link1.state.xc - [0;0;0.5])<1e-1 && norm(link2.state.xc - [0;0;2.0])<1e-1 && norm(link1.state.vc)<1e-1 && norm(link2.state.ωc)<1e-1
+        if !any(getindex.(storage.ω[1],1).>100*pi) && !any(getindex.(storage.ω[2],1).>100*pi) && norm([link1.state.xc;link2.state.xc;link1.state.vc;link2.state.vc] - [xd[1];xd[2];zeros(6)])<1e-1
             successful[counter] = true
         end
         counter += 1
