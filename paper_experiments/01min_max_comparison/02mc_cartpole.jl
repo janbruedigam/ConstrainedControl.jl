@@ -73,8 +73,8 @@ end
 
 steps = Base.OneTo(25000)
 
-s1 = 11
-s2 = 11
+s1 = 101
+s2 = 101
 # storages = [Storage{Float64}(steps,2) for i=1:s1*s2]
 storage = Storage{Float64}(steps,2)
 successful = [false for i=1:s1*s2]

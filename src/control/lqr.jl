@@ -146,6 +146,7 @@ function dlqr(A,Bu,Bλ,G,Q,R,N)
 
     k = 0
     for outer k=N-1:-1:1
+        D = Bu - Bλ/(G*Bλ)*G*Bu
         M11 = R + D'*Pk*Bu
         M12 = D'*Pk*Bλ
         M21 = G*Bu
