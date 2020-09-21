@@ -34,3 +34,26 @@ function care(A, B, Q, R)
 
     return U21/U11
 end
+
+function lqr(A, B, Q, R)
+    P = care(A, B, Q, R)
+    K = R\B'*P
+    return K
+end
+
+function dlqr(A, B, Q, R)
+    P = dare(A, B, Q, R)
+    K = (R + B'*P*B)\B'*P*A
+    return K
+end
+
+function dlqr(A, B, Q, R, Δt)
+    Q = Q*Δt
+    R = R*Δt
+    A = A*Δt+I
+    B = B*Δt 
+
+    P = dare(A, B, Q, R)
+    K = (R + B'*P*B)\B'*P*A
+    return K
+end

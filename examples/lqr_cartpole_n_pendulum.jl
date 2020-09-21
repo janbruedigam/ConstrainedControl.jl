@@ -22,7 +22,7 @@ p2 = [0.0;0.0;length1/2] # joint connection point
 # Number of links
 N = 3
 ϕinit = rand(N)/(3^N)
-yinit = rand()-0/5
+yinit = rand()-0.5
 
 # Links
 origin = Origin{Float64}()

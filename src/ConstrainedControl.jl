@@ -9,6 +9,7 @@ using Rotations: rotation_error
 
 export PID,
     LQR,
+    TrackingLQR,
 
     ilqr
 
@@ -16,6 +17,7 @@ export PID,
 include(joinpath("util","util.jl"))
 include(joinpath("control","pid.jl"))
 include(joinpath("control","lqr.jl"))
+include(joinpath("control","lqr_tracking.jl"))
 # include(joinpath("control","ilqr.jl"))
 
 end
