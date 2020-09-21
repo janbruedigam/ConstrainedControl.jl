@@ -146,13 +146,13 @@ function dlqr(A,Bu,Bλ,G,Q,R,N)
 
     k = 0
     for outer k=N-1:-1:1
-        M11 = R + Bu'*Pk*Bu
-        M12 = Bu'*Pk*Bλ
+        M11 = R + D'*Pk*Bu
+        M12 = D'*Pk*Bλ
         M21 = G*Bu
         M22 = G*Bλ
 
         M = [M11 M12;M21 M22]
-        b = [Bu'*Pk;G]*A
+        b = [D'*Pk;G]*A
 
         Kk = M\b
 
