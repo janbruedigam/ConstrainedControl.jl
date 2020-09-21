@@ -2,7 +2,6 @@ U = [-4.103287549769938	-1.350191915095031	-0.2838412996141297	0.093248409740164
 
 
 using ConstrainedDynamics
-using ConstrainedDynamicsVis
 using ConstrainedControl
 using LinearAlgebra
 using Rotations
@@ -77,5 +76,5 @@ R = [ones(1,1)*0.1]
 
 ucost = zeros(1000)
 
-lqr = TrackingLQR(mech, storage0, [[[U[k]]] for k=1:1000], [5], Q, R, controlfunction = owncontrol_trackinglqr!)
+lqr = TrackingLQR(mech, storage0, [[[U[k]]] for k=1:1000], [5], Q, R)
 @test true

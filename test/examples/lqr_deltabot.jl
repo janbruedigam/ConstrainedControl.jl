@@ -1,5 +1,4 @@
 using ConstrainedDynamics
-using ConstrainedDynamicsVis
 using ConstrainedControl
 using LinearAlgebra
 using Rotations
@@ -56,4 +55,4 @@ Q[5][6,6]=1.0
 R = [ones(1,1)*0.1 for i=1:2]
 
 lqr = LQR(mech, getid.(links), getid.(constraints[1:2]), Q, R, Inf, xd=xd, qd=qd, Fτd = [[[6.7879484]];[[-6.7879484]]])
-@true
+@test true
