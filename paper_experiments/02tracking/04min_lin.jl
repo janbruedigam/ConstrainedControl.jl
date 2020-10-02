@@ -1,7 +1,7 @@
 using ConstrainedControl
 using LinearAlgebra
+using StaticArrays
 
-U
 X = zeros(8,1000)
 N = length(U)
 Δt = 0.01
