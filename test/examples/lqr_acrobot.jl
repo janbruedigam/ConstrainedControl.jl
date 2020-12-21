@@ -16,8 +16,8 @@ p2a = [0.0;0.0;length1/2] # joint connection point
 p2b = [0.0;0.0;length1] # joint connection point
 
 # Desired orientation
-ϕ1 = pi
-ϕ2 = pi
+ϕ1 = pi+0.0
+ϕ2 = pi+0.0
 
 # Links
 origin = Origin{Float64}()
