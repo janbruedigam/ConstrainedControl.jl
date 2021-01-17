@@ -6,7 +6,6 @@ joint_axis = [1.0;0.0;0.0]
 
 length1 = 1.0
 width, depth = 0.1, 0.1
-box = Box(width, depth, length1, length1, color = RGBA(1., 1., 0.))
 
 p2 = [0.0;0.0;length1 / 2] # joint connection point
 
@@ -18,8 +17,8 @@ q2 = UnitQuaternion(RotX(ϕ2))
 
 # Links
 origin = Origin{Float64}()
-link1 = Body(box)
-link2 = Body(box)
+link1 = Box(width, depth, length1, length1, color = RGBA(1., 1., 0.))
+link2 = deepcopy(link1)
 
 # Constraints
 joint1 = EqualityConstraint(Revolute(origin, link1, joint_axis; p2=p2))
