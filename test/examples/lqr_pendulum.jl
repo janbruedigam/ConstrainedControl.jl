@@ -24,10 +24,9 @@ joint_between_origin_and_link1 = EqualityConstraint(Revolute(origin, link1, join
 
 links = [link1]
 constraints = [joint_between_origin_and_link1]
-shapes = [box]
 
 
-mech = Mechanism(origin, links, constraints, shapes = shapes)
+mech = Mechanism(origin, links, constraints)
 setPosition!(origin,link1,p2 = p2,Δq = UnitQuaternion(RotX(ϕ+pi-0.4)))
 
 xd=[[0;0.;0.5]]

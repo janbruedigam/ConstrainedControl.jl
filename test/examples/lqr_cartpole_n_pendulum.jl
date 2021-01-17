@@ -10,8 +10,6 @@ ey = [0.0;1.0;0.0]
 
 length1 = 1.0
 width, depth = 0.1, 0.1
-cartshape = Box(0.1, 0.5, 0.1, length1/2)
-poleshape = Box(width, depth, length1, length1)
 
 p2 = [0.0;0.0;length1/2] # joint connection point
 
@@ -25,8 +23,8 @@ yinit = rand()-0/5
 
 # Links
 origin = Origin{Float64}()
-cart = Body(cartshape)
-bodies = [cart; [Body(poleshape) for i = 1:N]]
+cart = Box(0.1, 0.5, 0.1, length1/2)
+bodies = [cart; [Box(width, depth, length1, length1) for i = 1:N]]
 
 # Constraints
 joint1 = EqualityConstraint(Prismatic(origin, cart, ey))
@@ -36,10 +34,8 @@ if N > 1
     constraints = [constraints; [EqualityConstraint(Revolute(bodies[i], bodies[i+1], ex; p1 = p2, p2=-p2)) for i=2:N]]
 end
 
-shapes = [cartshape;poleshape]
 
-
-mech = Mechanism(origin, bodies, constraints, shapes = shapes, g=-9.81)
+mech = Mechanism(origin, bodies, constraints, g=-9.81)
 setPosition!(origin,cart,Δx = [0;yinit;0])
 setPosition!(cart,bodies[2],p2 = -p2,Δq = UnitQuaternion(RotX(ϕinit[1])))
 for i=2:N

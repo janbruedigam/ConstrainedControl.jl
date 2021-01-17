@@ -28,10 +28,9 @@ joint2 = EqualityConstraint(Revolute(link1, link2, joint_axis; p1=-p2, p2=p2))
 
 links = [link1;link2]
 constraints = [joint1;joint2]
-shapes = [box]
 
 
-mech = Mechanism(origin, links, constraints, shapes = shapes)
+mech = Mechanism(origin, links, constraints)
 setPosition!(origin,link1,p2 = p2,Δq = q1)
 setPosition!(link1,link2,p1=-p2,p2 = p2,Δq = q2)
 
@@ -39,4 +38,4 @@ pid = PID(mech, getfield.(constraints,:id), [pi/2;-pi/4], P = [10.;10.], I = [10
 
 
 storage = simulate!(mech,10.,pid,record = true)
-visualize(mech,storage,shapes)
+visualize(mech,storage)

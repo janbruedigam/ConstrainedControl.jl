@@ -15,8 +15,6 @@ ey = [0.0;1.0;0.0]
 
 length1 = 1.0
 width, depth = 0.1, 0.1
-cartshape = Box(0.1, 0.5, 0.1, length1/2)
-poleshape = Box(width, depth, length1, length1)
 
 p2 = [0.0;0.0;length1/2] # joint connection point
 
@@ -25,10 +23,10 @@ p2 = [0.0;0.0;length1/2] # joint connection point
 
 # Links
 origin = Origin{Float64}()
-cart = Body(cartshape)
-pole1 = Body(poleshape)
-pole2 = Body(poleshape)
-pole3 = Body(poleshape)
+cart = Box(0.1, 0.5, 0.1, length1/2)
+pole1 = Box(width, depth, length1, length1)
+pole2 = deepcopy(pole1)
+pole3 = deepcopy(pole1)
 
 # Constraints
 joint1 = EqualityConstraint(Prismatic(origin, cart, ey))
@@ -38,10 +36,9 @@ joint4 = EqualityConstraint(Revolute(pole2, pole3, ex; p1 = -p2, p2=p2))
 
 links = [cart;pole1;pole2;pole3]
 constraints = [joint1;joint2;joint3;joint4]
-shapes = [cartshape;poleshape]
 
 
-mech = Mechanism(origin, links, constraints, shapes = shapes, g=-9.81,Δt = 0.01)
+mech = Mechanism(origin, links, constraints, g=-9.81,Δt = 0.01)
 setPosition!(origin,cart,Δx = [0;0.0;0])
 setPosition!(cart,pole1,p2 = p2,Δq = UnitQuaternion(RotX(ϕ+0)))
 setPosition!(pole1,pole2,p1 = -p2,p2 = p2,Δq = UnitQuaternion(RotX(0.)))
