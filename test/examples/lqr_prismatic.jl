@@ -19,10 +19,9 @@ joint_between_origin_and_link1 = EqualityConstraint(Prismatic(origin, link1, joi
 
 links = [link1]
 constraints = [joint_between_origin_and_link1]
-shapes = [box]
 
 
-mech = Mechanism(origin, links, constraints, shapes = shapes, g=0.)
+mech = Mechanism(origin, links, constraints, g=0.)
 setPosition!(origin,link1,Δx = [1.0;0;0])
 
 Q = ones(1)

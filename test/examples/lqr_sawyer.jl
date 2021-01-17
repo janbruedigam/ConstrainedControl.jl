@@ -4,7 +4,7 @@ using LinearAlgebra
 
 
 path = "examples/examples_files/sawyer_arm.urdf"
-mech, shapes = Mechanism(path, floating=false, g = 0.0)
+mech = Mechanism(path, floating=false, g = 0.0)
 
 setPosition!(mech,mech.eqconstraints["right_j0"],[0.0])
 setPosition!(mech,mech.eqconstraints["right_j1"],[-pi/2])

@@ -8,9 +8,6 @@ using Rotations
 joint_axis = [1.0;0.0;0.0]
 
 length1 = 1.0
-llshape = Box(0.1, 0.1, length1, length1)
-ulshape = Box(0.1, 0.1, length1/2, length1/2)
-pshape = Box(0.1, 0.1, length1/2*sqrt(2), length1/2*sqrt(2))
 
 pll = [0.0;0.0;length1/2] # joint connection point
 pul = [0.0;0.0;length1/4]
@@ -18,11 +15,11 @@ pp = [0.0;0.0;length1/4*sqrt(2)]
 
 # Links
 origin = Origin{Float64}()
-lowerlegl = Body(llshape)
-lowerlegr = Body(llshape)
-upperlegl = Body(ulshape)
-upperlegr = Body(ulshape)
-platform = Body(pshape)
+lowerlegl = Box(0.1, 0.1, length1, length1)
+lowerlegr = deepcopy(lowerlegl)
+upperlegl = Box(0.1, 0.1, length1/2, length1/2)
+upperlegr = deepcopy(upperlegl)
+platform = Box(0.1, 0.1, length1/2*sqrt(2), length1/2*sqrt(2))
 
 # Constraints
 floorlr = EqualityConstraint(Revolute(origin, lowerlegl, joint_axis; p2=-pll),Revolute(origin, lowerlegr, joint_axis; p2=-pll),FixedOrientation(origin,platform;qoffset = UnitQuaternion(RotX(pi/2))))
@@ -34,10 +31,9 @@ platr = EqualityConstraint(Revolute(platform, upperlegr, joint_axis; p2=pul, p1=
 
 links = [lowerlegl;lowerlegr;upperlegl;upperlegr;platform]
 constraints = [platl;platr;floorlr;kneel;kneer]
-shapes = [llshape;ulshape;pshape]
 
 
-mech = Mechanism(origin, links, constraints, shapes = shapes, g=-9.81, Δt = 0.01)
+mech = Mechanism(origin, links, constraints, g=-9.81, Δt = 0.01)
 setPosition!(origin,lowerlegl,p2 = -pll,Δq = UnitQuaternion(RotX(pi/4)))
 setPosition!(origin,lowerlegr,p2 = -pll,Δq = UnitQuaternion(RotX(-pi/4)))
 setPosition!(lowerlegl,upperlegl,p1 = pll, p2 = -pul,Δq = UnitQuaternion(RotX(-pi/2)))
