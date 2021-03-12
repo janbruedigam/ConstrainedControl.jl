@@ -13,7 +13,7 @@ mutable struct PID{T,N} <: Controller
     control!::Function
 
 
-    function PID(mechanism, eqcid::Int64, goal::T; P::T = zero(T), I::T = zero(T), D::T = zero(T), controlfunction::Function = control_pid!) where T
+    function PID(mechanism::Mechanism{T}, eqcid::Int64, goal; P = zero(T), I = zero(T), D = zero(T), controlfunction::Function = control_pid!) where T
         eqc = geteqconstraint(mechanism, eqcid)
         Nb = 6 * length(unique(eqc.childids))
         Nc = ConstrainedDynamics.length(eqc)
@@ -39,19 +39,37 @@ mutable struct PID{T,N} <: Controller
     end
 end
 
-function stateError_pid(mechanism, eqc, goal)
-    goal - minimalCoordinates(mechanism, eqc)[1]
+# Angle correction only works for revolute joints
+function stateError_pid(mechanism, eqc, goal; anglecorrection = true)
+    if anglecorrection && (typeof(eqc.constraints[1]) <: ConstrainedDynamics.Translational3 && typeof(eqc.constraints[2]) <: ConstrainedDynamics.Rotational2) 
+        mincoords = minimalCoordinates(mechanism, eqc)[1]
+        tempdiff = goal - mincoords
+        if tempdiff > pi
+            return tempdiff - 2*pi
+        elseif tempdiff < -pi
+            return tempdiff + 2*pi
+        else
+            return tempdiff
+        end
+    else
+        return goal - minimalCoordinates(mechanism, eqc)[1]
+    end
 end
 
-@generated function error_pid(mechanism, eqcids::SVector{N,Int64}, goals) where {N}
-    vec = [:(goals[$i] - minimalCoordinates(mechanism, geteqconstraint(mechanism, eqcids[$i]))[1]) for i = 1:N]
-    return :(svcat($(vec...)))
+# @generated function error_pid(mechanism, eqcids::SVector{N,Int64}, goals) where {N}
+#     vec = [:(goals[$i] - minimalCoordinates(mechanism, geteqconstraint(mechanism, eqcids[$i]))[1]) for i = 1:N]
+#     return :(svcat($(vec...)))
+# end
+
+function error_pid(mechanism, eqcids::SVector{N,Int64}, goals; anglecorrection = true) where {N}
+    vec = [stateError_pid(mechanism, geteqconstraint(mechanism, eqcids[i]), goals[i]; anglecorrection = anglecorrection) for i = 1:N]
+    return svcat(vec...)
 end
 
 function control_pid!(mechanism, pid::PID{T,N}, k) where {T,N}
     Δt = mechanism.Δt
 
-    currenterrors = error_pid(mechanism, pid.eqcids, pid.goals)
+    currenterrors = error_pid(mechanism, pid.eqcids, pid.goals, anglecorrection = true)
     k==1 && (pid.lasterrors = currenterrors)
 
     perrors = currenterrors
