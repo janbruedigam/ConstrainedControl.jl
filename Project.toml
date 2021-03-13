@@ -1,7 +1,7 @@
 name = "ConstrainedControl"
 uuid = "5933d0f4-dc4a-46ce-a189-54b4465bd7a4"
 authors = ["Jan Bruedigam"]
-version = "0.1.4"
+version = "0.1.5"
 
 [deps]
 ConstrainedDynamics = "65b0d8a9-e9fd-4f02-8653-a7163c490b26"
