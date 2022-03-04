@@ -22,7 +22,7 @@ upperlegr = deepcopy(upperlegl)
 platform = Box(0.1, 0.1, length1/2*sqrt(2), length1/2*sqrt(2))
 
 # Constraints
-floorlr = EqualityConstraint(Revolute(origin, lowerlegl, joint_axis; p2=-pll),Revolute(origin, lowerlegr, joint_axis; p2=-pll),FixedOrientation(origin,platform;qoffset = UnitQuaternion(RotX(pi/2))))
+floorlr = EqualityConstraint(Revolute(origin, lowerlegl, joint_axis; p2=-pll),Revolute(origin, lowerlegr, joint_axis; p2=-pll),FixedOrientation(origin,platform;qoffset = QuatRotation(RotX(pi/2))))
 kneel = EqualityConstraint(Revolute(lowerlegl, upperlegl, joint_axis; p1=pll, p2=-pul))
 kneer = EqualityConstraint(Revolute(lowerlegr, upperlegr, joint_axis; p1=pll, p2=-pul))
 platl = EqualityConstraint(Revolute(platform, upperlegl, joint_axis; p2=pul, p1=pp))
@@ -34,11 +34,11 @@ constraints = [platl;platr;floorlr;kneel;kneer]
 
 
 mech = Mechanism(origin, links, constraints, g=-9.81, Δt = 0.01)
-setPosition!(origin,lowerlegl,p2 = -pll,Δq = UnitQuaternion(RotX(pi/4)))
-setPosition!(origin,lowerlegr,p2 = -pll,Δq = UnitQuaternion(RotX(-pi/4)))
-setPosition!(lowerlegl,upperlegl,p1 = pll, p2 = -pul,Δq = UnitQuaternion(RotX(-pi/2)))
-setPosition!(lowerlegr,upperlegr,p1 = pll, p2 = -pul,Δq = UnitQuaternion(RotX(pi/2)))
-setPosition!(upperlegl,platform,p1 = pul, p2 = pp,Δq = UnitQuaternion(RotX(3pi/4)))
+setPosition!(origin,lowerlegl,p2 = -pll,Δq = QuatRotation(RotX(pi/4)))
+setPosition!(origin,lowerlegr,p2 = -pll,Δq = QuatRotation(RotX(-pi/4)))
+setPosition!(lowerlegl,upperlegl,p1 = pll, p2 = -pul,Δq = QuatRotation(RotX(-pi/2)))
+setPosition!(lowerlegr,upperlegr,p1 = pll, p2 = -pul,Δq = QuatRotation(RotX(pi/2)))
+setPosition!(upperlegl,platform,p1 = pul, p2 = pp,Δq = QuatRotation(RotX(3pi/4)))
 
 xd = [links[i].state.xc for i=1:5]
 qd=[links[i].state.qc for i=1:5]

@@ -5,7 +5,7 @@ mutable struct LQR{T,N,NK} <: Controller
 
     xd::Vector{SVector{3,Float64}}
     vd::Vector{SVector{3,Float64}}
-    qd::Vector{UnitQuaternion{T}}
+    qd::Vector{QuatRotation{T}}
     ωd::Vector{SVector{3,Float64}}
 
     eqcids::Vector{Integer}
@@ -50,7 +50,7 @@ mutable struct LQR{T,N,NK} <: Controller
             Q::Vector{<:AbstractMatrix{T}}, R::Vector{<:AbstractMatrix{T}}, horizon;
             xd::Vector{<:AbstractVector{T}} = [SA{T}[0; 0; 0] for i=1:Nb], 
             vd::Vector{<:AbstractVector{T}} = [SA{T}[0; 0; 0] for i=1:Nb],
-            qd::Vector{UnitQuaternion{T}} = [one(UnitQuaternion{T}) for i=1:Nb], 
+            qd::Vector{QuatRotation{T}} = [one(QuatRotation{T}) for i=1:Nb], 
             ωd::Vector{<:AbstractVector{T}} = [SA{T}[0; 0; 0] for i=1:Nb],
             Fτd::Vector{<:AbstractVector{T}} = [SA{T}[0] for i=1:length(eqcids)],
             controlfunction::Function = control_lqr!

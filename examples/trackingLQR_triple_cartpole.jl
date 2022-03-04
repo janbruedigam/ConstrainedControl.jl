@@ -41,9 +41,9 @@ constraints = [joint1;joint2;joint3;joint4]
 
 mech = Mechanism(origin, links, constraints, g=-9.81,Δt = 0.01)
 setPosition!(origin,cart,Δx = [0;0.0;0])
-setPosition!(cart,pole1,p2 = p2,Δq = UnitQuaternion(RotX(ϕ+0)))
-setPosition!(pole1,pole2,p1 = -p2,p2 = p2,Δq = UnitQuaternion(RotX(0.)))
-setPosition!(pole2,pole3,p1 = -p2,p2 = p2,Δq = UnitQuaternion(RotX(0.)))
+setPosition!(cart,pole1,p2 = p2,Δq = QuatRotation(RotX(ϕ+0)))
+setPosition!(pole1,pole2,p1 = -p2,p2 = p2,Δq = QuatRotation(RotX(0.)))
+setPosition!(pole2,pole3,p1 = -p2,p2 = p2,Δq = QuatRotation(RotX(0.)))
 
 function control!(mechanism, k)
     setForce!(mechanism, geteqconstraint(mechanism,5), [U[k]])
@@ -59,9 +59,9 @@ simulate!(mech,storage0,control!,record = true);
 # Tracking Control
 
 setPosition!(origin,cart,Δx = [0;0.0;0])
-setPosition!(cart,pole1,p2 = p2,Δq = UnitQuaternion(RotX(0.)))
-setPosition!(pole1,pole2,p1 = -p2,p2 = p2,Δq = UnitQuaternion(RotX(0.)))
-setPosition!(pole2,pole3,p1 = -p2,p2 = p2,Δq = UnitQuaternion(RotX(0.)))
+setPosition!(cart,pole1,p2 = p2,Δq = QuatRotation(RotX(0.)))
+setPosition!(pole1,pole2,p1 = -p2,p2 = p2,Δq = QuatRotation(RotX(0.)))
+setPosition!(pole2,pole3,p1 = -p2,p2 = p2,Δq = QuatRotation(RotX(0.)))
 
 Q = [diagm(ones(12))*0.0 for i=1:4]
 Q[1][2,2] = 10

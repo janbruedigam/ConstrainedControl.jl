@@ -31,11 +31,11 @@ constraints = [joint1;joint2]
 
 
 mech = Mechanism(origin, links, constraints, g=-9.81)
-setPosition!(origin,link1,p2 = p2a,Δq = UnitQuaternion(RotX(ϕ1-0.1)))
-setPosition!(link1,link2,p1=-p2a,p2 = p2b,Δq = UnitQuaternion(RotX(0.1)))
+setPosition!(origin,link1,p2 = p2a,Δq = QuatRotation(RotX(ϕ1-0.1)))
+setPosition!(link1,link2,p1=-p2a,p2 = p2b,Δq = QuatRotation(RotX(0.1)))
 
 xd = [[[0;0;0.5]];[[0;0;2.0]]]
-qd=[[UnitQuaternion(RotX(ϕ1))];[UnitQuaternion(RotX(ϕ2))]]
+qd=[[QuatRotation(RotX(ϕ1))];[QuatRotation(RotX(ϕ2))]]
 
 Q = [diagm(ones(12))*0.0 for i=1:2]
 Q[1][7,7]=1.0
