@@ -37,9 +37,9 @@ end
 
 mech = Mechanism(origin, bodies, constraints, g=-9.81)
 setPosition!(origin,cart,Δx = [0;yinit;0])
-setPosition!(cart,bodies[2],p2 = -p2,Δq = UnitQuaternion(RotX(ϕinit[1])))
+setPosition!(cart,bodies[2],p2 = -p2,Δq = QuatRotation(RotX(ϕinit[1])))
 for i=2:N
-    setPosition!(bodies[i],bodies[i+1],p1=p2,p2=-p2,Δq=UnitQuaternion(RotX(ϕinit[i])))
+    setPosition!(bodies[i],bodies[i+1],p1=p2,p2=-p2,Δq=QuatRotation(RotX(ϕinit[i])))
 end
 
 xd = [[[0;0;0.0]]; [[0;0;i-1+0.5] for i=1:N]]

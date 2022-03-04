@@ -26,10 +26,10 @@ constraints = [joint_between_origin_and_link1]
 
 
 mech = Mechanism(origin, links, constraints)
-setPosition!(origin,link1,p2 = p2,Δq = UnitQuaternion(RotX(ϕ+pi-0.4)))
+setPosition!(origin,link1,p2 = p2,Δq = QuatRotation(RotX(ϕ+pi-0.4)))
 
 xd=[[0;0.;0.5]]
-qd=[UnitQuaternion(RotX(ϕ+pi))]
+qd=[QuatRotation(RotX(ϕ+pi))]
 
 Q = [diagm(ones(12))*0.0]
 Q[1][7,7] = 1000.0

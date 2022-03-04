@@ -5,7 +5,7 @@ mutable struct TrackingLQR{T,N,NK} <: Controller
 
     xd::Vector{Vector{SVector{3,Float64}}} # for each time step and each eqc
     vd::Vector{Vector{SVector{3,Float64}}}# for each time step and each eqc
-    qd::Vector{Vector{UnitQuaternion{T}}} # for each time step and each eqc
+    qd::Vector{Vector{QuatRotation{T}}} # for each time step and each eqc
     ωd::Vector{Vector{SVector{3,Float64}}} # for each time step and each eqc
 
     eqcids::Vector{Integer}
@@ -24,7 +24,7 @@ mutable struct TrackingLQR{T,N,NK} <: Controller
 
         xd = [[SA{T}[0; 0; 0] for i=1:Nb] for j=1:N]
         vd = [[SA{T}[0; 0; 0] for i=1:Nb] for j=1:N]
-        qd = [[one(UnitQuaternion{T}) for i=1:Nb] for j=1:N]        
+        qd = [[one(QuatRotation{T}) for i=1:Nb] for j=1:N]        
         ωd = [[SA{T}[0; 0; 0] for i=1:Nb] for j=1:N]
 
         for k = 1:N
