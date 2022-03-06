@@ -11,4 +11,8 @@ At the moment, the code is not yet documented, but the provided examples should 
 * [ConstrainedDynamicsVis](https://github.com/janbruedigam/ConstrainedDynamicsVis.jl): A package built on top of ConstrainedDynamics and MeshCat for visualization of simulations
 
 ## Related Publications
-[Linear-Time Variational Integrators in Maximal Coordinates](https://arxiv.org/abs/2002.11245) (accepted to WAFR 2020)
+[Linear-Time Variational Integrators in Maximal Coordinates](https://arxiv.org/abs/2002.11245) (accepted to WAFR 2020) [Presentation](https://www.youtube.com/watch?v=kI5qBccGKfU)
+
+[Linear-Quadratic Optimal Control in Maximal Coordinates](https://arxiv.org/abs/2010.05886) (accepted to ICRA 2021)
+
+[Linear-Time Contact and Friction Dynamics in Maximal Coordinates using Variational Integrators](https://arxiv.org/abs/2109.07262)
