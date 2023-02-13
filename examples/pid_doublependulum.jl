@@ -12,9 +12,9 @@ p2 = [0.0;0.0;length1 / 2] # joint connection point
 
 # Initial orientation
 ϕ1 = 0
-q1 = QuatRotation(RotX(ϕ1))
+q1 = Quaternion(RotX(ϕ1))
 ϕ2 = 0
-q2 = QuatRotation(RotX(ϕ2))
+q2 = Quaternion(RotX(ϕ2))
 
 # Links
 origin = Origin{Float64}()

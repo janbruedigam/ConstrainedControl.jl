@@ -4,8 +4,6 @@ U = [-4.103287549769938	-1.350191915095031	-0.2838412996141297	0.093248409740164
 using ConstrainedDynamics
 using ConstrainedControl
 using LinearAlgebra
-using Rotations
-using Rotations: rotation_error
 
 # Trajectory Generation from U
 
@@ -40,12 +38,12 @@ constraints = [joint1;joint2;joint3;joint4]
 
 mech = Mechanism(origin, links, constraints, g=-9.81,Δt = 0.01)
 setPosition!(origin,cart,Δx = [0;0.0;0])
-setPosition!(cart,pole1,p2 = p2,Δq = QuatRotation(RotX(ϕ+0)))
-setPosition!(pole1,pole2,p1 = -p2,p2 = p2,Δq = QuatRotation(RotX(0.)))
-setPosition!(pole2,pole3,p1 = -p2,p2 = p2,Δq = QuatRotation(RotX(0.)))
+setPosition!(cart,pole1,p2 = p2,Δq = Quaternion(RotX(ϕ+0)))
+setPosition!(pole1,pole2,p1 = -p2,p2 = p2,Δq = Quaternion(RotX(0.)))
+setPosition!(pole2,pole3,p1 = -p2,p2 = p2,Δq = Quaternion(RotX(0.)))
 
 function control!(mechanism, k)
-    setForce!(mechanism, geteqconstraint(mechanism,5), [U[k]])
+    setForce!(mechanism, joint1, [U[k]])
 end
 
 steps = Base.OneTo(1000)
@@ -56,9 +54,9 @@ simulate!(mech,storage0,control!,record = true);
 # Tracking Control
 
 setPosition!(origin,cart,Δx = [0;0.0;0])
-setPosition!(cart,pole1,p2 = p2,Δq = QuatRotation(RotX(0.)))
-setPosition!(pole1,pole2,p1 = -p2,p2 = p2,Δq = QuatRotation(RotX(0.)))
-setPosition!(pole2,pole3,p1 = -p2,p2 = p2,Δq = QuatRotation(RotX(0.)))
+setPosition!(cart,pole1,p2 = p2,Δq = Quaternion(RotX(0.)))
+setPosition!(pole1,pole2,p1 = -p2,p2 = p2,Δq = Quaternion(RotX(0.)))
+setPosition!(pole2,pole3,p1 = -p2,p2 = p2,Δq = Quaternion(RotX(0.)))
 
 Q = [diagm(ones(12))*0.0 for i=1:4]
 Q[1][2,2] = 10
@@ -71,7 +69,73 @@ Q[4][7,7] = 40
 Q[4][10,10] = 1
 R = [ones(1,1)*0.1]
 
-ucost = zeros(1000)
+function owncontrol_trackinglqr!(mechanism::Mechanism{T,Nn,Nb}, lqr::TrackingLQR{T,N}, k) where {T,Nn,Nb,N}
+    Δz = zeros(T,Nb*12)
+    for (id,body) in pairs(mechanism.bodies)
+        colx = (id-1)*12+1:(id-1)*12+3
+        colv = (id-1)*12+4:(id-1)*12+6
+        colq = (id-1)*12+7:(id-1)*12+9
+        colω = (id-1)*12+10:(id-1)*12+12
 
-lqr = TrackingLQR(mech, storage0, [[[U[k]]] for k=1:1000], [5], Q, R)
+        state = body.state
+        Δz[colx] = state.xsol[2]-lqr.xd[k][id]
+        Δz[colv] = state.vsol[2]-lqr.vd[k][id]
+        # Δz[colq] = rotation_error(state.qsol[2],lqr.qd[k][id],qvm)
+        qerr = lqr.qd[k][id]\state.qsol[2]
+        Δz[colq] = imag(qerr) #* sign(qerr.s)
+        Δz[colω] = state.ωsol[2]-lqr.ωd[k][id]
+    end
+
+    v1 = mechanism.bodies[1].state.vc[2]
+    ω2 = mechanism.bodies[2].state.ωc[1]
+    ω3 = mechanism.bodies[3].state.ωc[1] - ω2
+    ω4 = mechanism.bodies[4].state.ωc[1] - ω2 - ω3
+
+    ucart = -sign(v1)*0.1*abs(v1) + randn()*2
+    up2 = -sign(ω2)*0.1*abs(ω2)
+    up3 = -sign(ω3)*0.1*abs(ω3)
+    up4 = -sign(ω4)*0.1*abs(ω4)
+
+    if k<N
+        for (i,id) in enumerate(lqr.eqcids)
+            u = lqr.Fτd[k][i] - lqr.K[k][i]*Δz + ucart
+            setForce!(mechanism, geteqconstraint(mechanism, id), u)
+        end
+
+        setForce!(mechanism, geteqconstraint(mechanism,6), [up2])
+        setForce!(mechanism, geteqconstraint(mechanism,7), [up3])
+        setForce!(mechanism, geteqconstraint(mechanism,8), [up4])
+    end
+
+    return
+end
+
+function uncontrol!(mechanism, k)
+    v1 = cart.state.vc[2]
+    ω2 = pole1.state.ωc[1]
+    ω3 = pole2.state.ωc[1] - ω2
+    ω4 = pole3.state.ωc[1] - ω2 - ω3
+
+    ucart = U[k] - sign(v1)*0.1*abs(v1) + randn()*2
+    up2 = -sign(ω2)*0.1*abs(ω2)
+    up3 = -sign(ω3)*0.1*abs(ω3)
+    up4 = -sign(ω4)*0.1*abs(ω4)
+
+    setForce!(mechanism, joint1, [ucart])
+    setForce!(mechanism, joint2, [up2])
+    setForce!(mechanism, joint3, [up3])
+    setForce!(mechanism, joint4, [up4])
+end
+
+lqr = TrackingLQR(mech, storage0, [[[U[k]]] for k=1:1000], [joint1.id], Q, R, controlfunction = owncontrol_trackinglqr!)
+
+setPosition!(origin,cart,Δx = [0;0;0])
+setPosition!(cart,pole1,p2 = p2)
+setPosition!(pole1,pole2,p1 = -p2,p2 = p2)
+setPosition!(pole2,pole3,p1 = -p2,p2 = p2)
+setVelocity!(cart)
+setVelocity!(pole1)
+setVelocity!(pole2)
+setVelocity!(pole3)
+simulate!(mech,1,uncontrol!)
 @test true

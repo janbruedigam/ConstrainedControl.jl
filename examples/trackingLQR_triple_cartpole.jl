@@ -5,8 +5,6 @@ using ConstrainedDynamics
 using ConstrainedDynamicsVis
 using ConstrainedControl
 using LinearAlgebra
-using Rotations
-using Rotations: rotation_error
 
 # Trajectory Generation from U
 
@@ -41,12 +39,12 @@ constraints = [joint1;joint2;joint3;joint4]
 
 mech = Mechanism(origin, links, constraints, g=-9.81,Δt = 0.01)
 setPosition!(origin,cart,Δx = [0;0.0;0])
-setPosition!(cart,pole1,p2 = p2,Δq = QuatRotation(RotX(ϕ+0)))
-setPosition!(pole1,pole2,p1 = -p2,p2 = p2,Δq = QuatRotation(RotX(0.)))
-setPosition!(pole2,pole3,p1 = -p2,p2 = p2,Δq = QuatRotation(RotX(0.)))
+setPosition!(cart,pole1,p2 = p2,Δq = Quaternion(RotX(ϕ+0)))
+setPosition!(pole1,pole2,p1 = -p2,p2 = p2,Δq = Quaternion(RotX(0.)))
+setPosition!(pole2,pole3,p1 = -p2,p2 = p2,Δq = Quaternion(RotX(0.)))
 
 function control!(mechanism, k)
-    setForce!(mechanism, geteqconstraint(mechanism,5), [U[k]])
+    setForce!(mechanism, joint1, [U[k]])
 end
 
 steps = Base.OneTo(1000)
@@ -59,9 +57,9 @@ simulate!(mech,storage0,control!,record = true);
 # Tracking Control
 
 setPosition!(origin,cart,Δx = [0;0.0;0])
-setPosition!(cart,pole1,p2 = p2,Δq = QuatRotation(RotX(0.)))
-setPosition!(pole1,pole2,p1 = -p2,p2 = p2,Δq = QuatRotation(RotX(0.)))
-setPosition!(pole2,pole3,p1 = -p2,p2 = p2,Δq = QuatRotation(RotX(0.)))
+setPosition!(cart,pole1,p2 = p2,Δq = Quaternion(RotX(0.)))
+setPosition!(pole1,pole2,p1 = -p2,p2 = p2,Δq = Quaternion(RotX(0.)))
+setPosition!(pole2,pole3,p1 = -p2,p2 = p2,Δq = Quaternion(RotX(0.)))
 
 Q = [diagm(ones(12))*0.0 for i=1:4]
 Q[1][2,2] = 10
@@ -77,7 +75,6 @@ R = [ones(1,1)*0.1]
 
 function owncontrol_trackinglqr!(mechanism::Mechanism{T,Nn,Nb}, lqr::TrackingLQR{T,N}, k) where {T,Nn,Nb,N}
     Δz = zeros(T,Nb*12)
-    qvm = QuatVecMap()
     for (id,body) in pairs(mechanism.bodies)
         colx = (id-1)*12+1:(id-1)*12+3
         colv = (id-1)*12+4:(id-1)*12+6
@@ -87,7 +84,9 @@ function owncontrol_trackinglqr!(mechanism::Mechanism{T,Nn,Nb}, lqr::TrackingLQR
         state = body.state
         Δz[colx] = state.xsol[2]-lqr.xd[k][id]
         Δz[colv] = state.vsol[2]-lqr.vd[k][id]
-        Δz[colq] = rotation_error(state.qsol[2],lqr.qd[k][id],qvm)
+        # Δz[colq] = rotation_error(state.qsol[2],lqr.qd[k][id],qvm)
+        qerr = lqr.qd[k][id]\state.qsol[2]
+        Δz[colq] = imag(qerr) #* sign(qerr.s)
         Δz[colω] = state.ωsol[2]-lqr.ωd[k][id]
     end
 
@@ -115,23 +114,23 @@ function owncontrol_trackinglqr!(mechanism::Mechanism{T,Nn,Nb}, lqr::TrackingLQR
     return
 end
 
-lqr = TrackingLQR(mech, storage0, [[[U[k]]] for k=1:1000], [5], Q, R, controlfunction = owncontrol_trackinglqr!)
+lqr = TrackingLQR(mech, storage0, [[[U[k]]] for k=1:1000], [joint1.id], Q, R, controlfunction = owncontrol_trackinglqr!)
 
 function uncontrol!(mechanism, k)
-    v1 = mechanism.bodies[1].state.vc[2]
-    ω2 = mechanism.bodies[2].state.ωc[1]
-    ω3 = mechanism.bodies[3].state.ωc[1] - ω2
-    ω4 = mechanism.bodies[4].state.ωc[1] - ω2 - ω3
+    v1 = cart.state.vc[2]
+    ω2 = pole1.state.ωc[1]
+    ω3 = pole2.state.ωc[1] - ω2
+    ω4 = pole3.state.ωc[1] - ω2 - ω3
 
     ucart = U[k] - sign(v1)*0.1*abs(v1) + randn()*2
     up2 = -sign(ω2)*0.1*abs(ω2)
     up3 = -sign(ω3)*0.1*abs(ω3)
     up4 = -sign(ω4)*0.1*abs(ω4)
 
-    setForce!(mechanism, geteqconstraint(mechanism,5), [ucart])
-    setForce!(mechanism, geteqconstraint(mechanism,6), [up2])
-    setForce!(mechanism, geteqconstraint(mechanism,7), [up3])
-    setForce!(mechanism, geteqconstraint(mechanism,8), [up4])
+    setForce!(mechanism, joint1, [ucart])
+    setForce!(mechanism, joint2, [up2])
+    setForce!(mechanism, joint3, [up3])
+    setForce!(mechanism, joint4, [up4])
 end
 
 

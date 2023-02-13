@@ -11,9 +11,9 @@ p2 = [0.0;0.0;length1 / 2] # joint connection point
 
 # Initial orientation
 ϕ1 = 0
-q1 = QuatRotation(RotX(ϕ1))
+q1 = Quaternion(RotX(ϕ1))
 ϕ2 = 0
-q2 = QuatRotation(RotX(ϕ2))
+q2 = Quaternion(RotX(ϕ2))
 
 # Links
 origin = Origin{Float64}()
@@ -33,4 +33,6 @@ setPosition!(origin,link1,p2 = p2,Δq = q1)
 setPosition!(link1,link2,p1=-p2,p2 = p2,Δq = q2)
 
 pid = PID(mech, getfield.(constraints,:id), [pi/2;-pi/4], P = [10.;10.], I = [10.;10], D = [5.;5.])
+
+simulate!(mech,1,pid)
 @test true

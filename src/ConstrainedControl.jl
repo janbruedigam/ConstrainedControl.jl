@@ -1,11 +1,9 @@
 module ConstrainedControl
 
 using ConstrainedDynamics
-using ConstrainedDynamics: svcat, szeros
+using ConstrainedDynamics: svcat, szeros, imag
 using LinearAlgebra
 using StaticArrays
-using Rotations
-using Rotations: rotation_error
 
 export PID,
     LQR,
