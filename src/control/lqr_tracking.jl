@@ -5,7 +5,7 @@ mutable struct TrackingLQR{T,N,NK} <: Controller
 
     xd::Vector{Vector{SVector{3,Float64}}} # for each time step and each eqc
     vd::Vector{Vector{SVector{3,Float64}}}# for each time step and each eqc
-    qd::Vector{Vector{QuatRotation{T}}} # for each time step and each eqc
+    qd::Vector{Vector{Quaternion{T}}} # for each time step and each eqc
     ωd::Vector{Vector{SVector{3,Float64}}} # for each time step and each eqc
 
     eqcids::Vector{Integer}
@@ -24,7 +24,7 @@ mutable struct TrackingLQR{T,N,NK} <: Controller
 
         xd = [[SA{T}[0; 0; 0] for i=1:Nb] for j=1:N]
         vd = [[SA{T}[0; 0; 0] for i=1:Nb] for j=1:N]
-        qd = [[one(QuatRotation{T}) for i=1:Nb] for j=1:N]        
+        qd = [[one(Quaternion{T}) for i=1:Nb] for j=1:N]        
         ωd = [[SA{T}[0; 0; 0] for i=1:Nb] for j=1:N]
 
         for k = 1:N
@@ -45,7 +45,6 @@ end
 
 function control_trackinglqr!(mechanism::Mechanism{T,Nn,Nb}, lqr::TrackingLQR{T,N}, k) where {T,Nn,Nb,N}
     Δz = zeros(T,Nb*12)
-    qvm = QuatVecMap()
     for (id,body) in pairs(mechanism.bodies)
         colx = (id-1)*12+1:(id-1)*12+3
         colv = (id-1)*12+4:(id-1)*12+6
@@ -55,7 +54,9 @@ function control_trackinglqr!(mechanism::Mechanism{T,Nn,Nb}, lqr::TrackingLQR{T,
         state = body.state
         Δz[colx] = state.xsol[2]-lqr.xd[k][id]
         Δz[colv] = state.vsol[2]-lqr.vd[k][id]
-        Δz[colq] = rotation_error(state.qsol[2],lqr.qd[k][id],qvm)
+        # Δz[colq] = rotation_error(state.qsol[2],lqr.qd[k][id],qvm)
+        qerr = lqr.qd[k][id]\state.qsol[2]
+        Δz[colq] = imag(qerr) #* sign(qerr.s)
         Δz[colω] = state.ωsol[2]-lqr.ωd[k][id]
     end
 
@@ -75,7 +76,7 @@ function dlqr(mechanism::Mechanism{T,Nn,Nb,Ne}, xd, vd, qd, ωd, Fτd, eqcids,Q,
     mu = size(eqcids)[1]
     mλ = 0
     for eqc in mechanism.eqconstraints
-        ConstrainedDynamics.isinactive(eqc) && continue
+        # ConstrainedDynamics.isinactive(eqc) && continue
         mλ += ConstrainedDynamics.length(eqc)
     end
     Ku = [[zeros(1,size(Q)[1]) for j=1:mu] for i=1:(N-1)]

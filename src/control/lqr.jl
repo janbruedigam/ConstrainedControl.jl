@@ -5,7 +5,7 @@ mutable struct LQR{T,N,NK} <: Controller
 
     xd::Vector{SVector{3,Float64}}
     vd::Vector{SVector{3,Float64}}
-    qd::Vector{QuatRotation{T}}
+    qd::Vector{Quaternion{T}}
     ωd::Vector{SVector{3,Float64}}
 
     eqcids::Vector{Integer}
@@ -50,7 +50,7 @@ mutable struct LQR{T,N,NK} <: Controller
             Q::Vector{<:AbstractMatrix{T}}, R::Vector{<:AbstractMatrix{T}}, horizon;
             xd::Vector{<:AbstractVector{T}} = [SA{T}[0; 0; 0] for i=1:Nb], 
             vd::Vector{<:AbstractVector{T}} = [SA{T}[0; 0; 0] for i=1:Nb],
-            qd::Vector{QuatRotation{T}} = [one(QuatRotation{T}) for i=1:Nb], 
+            qd::Vector{Quaternion{T}} = [one(Quaternion{T}) for i=1:Nb], 
             ωd::Vector{<:AbstractVector{T}} = [SA{T}[0; 0; 0] for i=1:Nb],
             Fτd::Vector{<:AbstractVector{T}} = [SA{T}[0] for i=1:length(eqcids)],
             controlfunction::Function = control_lqr!
@@ -88,8 +88,7 @@ end
 
 function control_lqr!(mechanism::Mechanism{T,Nn,Nb}, lqr::LQR{T,N}, k) where {T,Nn,Nb,N}
     Δz = zeros(T,Nb*12)
-    qvm = QuatVecMap()
-    for (id,body) in pairs(mechanism.bodies)
+    for (id,body) in enumerate(mechanism.bodies)
         colx = (id-1)*12+1:(id-1)*12+3
         colv = (id-1)*12+4:(id-1)*12+6
         colq = (id-1)*12+7:(id-1)*12+9
@@ -98,7 +97,9 @@ function control_lqr!(mechanism::Mechanism{T,Nn,Nb}, lqr::LQR{T,N}, k) where {T,
         state = body.state
         Δz[colx] = state.xsol[2]-lqr.xd[id]
         Δz[colv] = state.vsol[2]-lqr.vd[id]
-        Δz[colq] = rotation_error(state.qsol[2],lqr.qd[id],qvm)
+        # Δz[colq] = rotation_error(state.qsol[2],lqr.qd[id],qvm)
+        qerr = lqr.qd[id]\state.qsol[2]
+        Δz[colq] = imag(qerr) #* sign(qerr.s)
         Δz[colω] = state.ωsol[2]-lqr.ωd[id]
     end
 
@@ -114,8 +115,7 @@ end
 
 function control_lqr!(mechanism::Mechanism{T,Nn,Nb}, lqr::LQR{T,Inf}, k) where {T,Nn,Nb}
     Δz = zeros(T,Nb*12)
-    qvm = QuatVecMap()
-    for (id,body) in pairs(mechanism.bodies)
+    for (id,body) in enumerate(mechanism.bodies)
         colx = (id-1)*12+1:(id-1)*12+3
         colv = (id-1)*12+4:(id-1)*12+6
         colq = (id-1)*12+7:(id-1)*12+9
@@ -124,7 +124,9 @@ function control_lqr!(mechanism::Mechanism{T,Nn,Nb}, lqr::LQR{T,Inf}, k) where {
         state = body.state
         Δz[colx] = state.xsol[2]-lqr.xd[id]
         Δz[colv] = state.vsol[2]-lqr.vd[id]
-        Δz[colq] = rotation_error(state.qsol[2],lqr.qd[id],qvm)
+        # Δz[colq] = rotation_error(state.qsol[2],lqr.qd[id],qvm)
+        qerr = lqr.qd[id]\state.qsol[2]
+        Δz[colq] = imag(qerr) #* sign(qerr.s)
         Δz[colω] = state.ωsol[2]-lqr.ωd[id]
     end
 

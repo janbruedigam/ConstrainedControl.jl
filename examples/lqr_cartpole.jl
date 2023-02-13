@@ -2,7 +2,6 @@ using ConstrainedDynamics
 using ConstrainedDynamicsVis
 using ConstrainedControl
 using LinearAlgebra
-using Rotations
 
 
 # Parameters
@@ -32,7 +31,7 @@ constraints = [joint1;joint2]
 
 mech = Mechanism(origin, links, constraints, g=-9.81)
 setPosition!(origin,cart,Δx = [0;0.5;0])
-setPosition!(cart,pole,p2 = -p2,Δq = QuatRotation(RotX(ϕ+0.2)))
+setPosition!(cart,pole,p2 = -p2,Δq = Quaternion(RotX(ϕ+0.2)))
 
 xd = [[[0;0;0.0]];[[0;0;0.5]]]
 

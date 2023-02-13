@@ -27,4 +27,6 @@ Q = ones(1)
 R = ones(1)
 
 lqr = LQR(mech, getid.(constraints), getid.(constraints), Q, R, 10.)
+
+simulate!(mech,1,lqr)
 @test true
